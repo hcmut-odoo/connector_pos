@@ -4,8 +4,11 @@ import base64
 import logging
 from contextlib import contextmanager
 
-from pospyt import PosWebServiceDict, PosWebServiceError
-from ...pospyt.pospyt import PosWebservice
+from ...pospyt.pospyt import (
+    PosWebservice,
+    PosWebServiceDict,
+    PosWebServiceError
+)
 
 from requests.exceptions import (
     ConnectionError as ConnError,
