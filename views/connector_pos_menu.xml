@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <menuitem
+        id="menu_pos_root"
+        parent="connector.menu_connector_root"
+        name="Pos"
+        sequence="10"
+        groups="connector.group_connector_manager"
+    />
+    <!-- TODO group: Pos Manager -->
+
+    <menuitem
+        id="menu_pos_backend"
+        name="Backends"
+        parent="menu_pos_root"
+        action="action_pos_backend"
+    />
+
+    <menuitem
+        id="menu_pos_carrier"
+        name="Carriers"
+        parent="menu_pos_root"
+        sequence="40"
+        action="action_pos_carrier"
+    />
+
+    <record id="action_pos_attributes" model="ir.actions.act_window">
+        <field name="name">Pos Options / Attributes</field>
+        <field name="res_model">pos.product.product</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_pos_categories" model="ir.actions.act_window">
+        <field name="name">Odoo product Categories</field>
+        <field name="res_model">pos.product.category</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- TODO: Implement security strategy groups="odoo_base.group_oc_manager" -->
+    <menuitem
+        id="menu_pos_external_objects"
+        name="External Objects"
+        parent="menu_pos_root"
+        sequence="100"
+    />
+
+    <!-- <menuitem id="menu_pos_external_uom" name="External UOM" parent="menu_pos_external_objects"
+        action="action_pos_uom" /> -->
+
+    <menuitem
+        id="menu_pos_external_attribute"
+        name="External Attributes"
+        parent="menu_pos_external_objects"
+        action="action_pos_attributes"
+    />
+    <menuitem
+        id="menu_pos_external_values"
+        name="External Attribute Values"
+        parent="menu_pos_external_objects"
+        action="action_pos_values"
+    />
+    <menuitem
+        id="menu_pos_external_categories"
+        name="External Categories"
+        parent="menu_pos_external_objects"
+        action="action_pos_categories"
+    />
+    <menuitem
+        id="menu_pos_external_products"
+        name="External Products"
+        parent="menu_pos_external_objects"
+        action="action_pos_products"
+    />
+</odoo>

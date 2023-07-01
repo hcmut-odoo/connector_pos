@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="product_category_connector_pos_tree_view" model="ir.ui.view">
+        <field name="model">pos.product.category</field>
+        <field name="arch" type="xml">
+            <tree string="Pos Product Category" create="0">
+                <field name="backend_id" string="Backend" />
+                <field name="pos_id" />
+                <field name="date_add" />
+                <field name="date_upd" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="product_category_connector_pos_form_view" model="ir.ui.view">
+        <field name="name">pos.product.category.form.view</field>
+        <field name="model">pos.product.category</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Pos Product Category">
+                <group string="Primary Data">
+                    <field name="backend_id" string="Backend" />
+                    <field name="pos_id" />
+                    <field name="date_add" />
+                    <field name="date_upd" />
+                    <field name="position" />
+                </group>
+                <group string="Descriptions">
+                    <field name="description" />
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="product_category_pos_binding_form_view" model="ir.ui.view">
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='first']" position="after">
+                <group
+                    string="Pos Binding"
+                    groups="connector.group_connector_manager"
+                >
+                    <field name="pos_bind_ids" nolabel="1" />
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
