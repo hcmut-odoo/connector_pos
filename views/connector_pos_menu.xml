@@ -17,19 +17,19 @@
         action="action_pos_backend"
     />
 
-    <menuitem
+    <!-- <menuitem
         id="menu_pos_carrier"
         name="Carriers"
         parent="menu_pos_root"
         sequence="40"
         action="action_pos_carrier"
-    />
+    /> -->
 
-    <record id="action_pos_attributes" model="ir.actions.act_window">
+    <!-- <record id="action_pos_attributes" model="ir.actions.act_window">
         <field name="name">Pos Options / Attributes</field>
         <field name="res_model">pos.product.product</field>
         <field name="view_mode">tree,form</field>
-    </record>
+    </record> -->
 
     <record id="action_pos_categories" model="ir.actions.act_window">
         <field name="name">Odoo product Categories</field>
@@ -45,31 +45,28 @@
         sequence="100"
     />
 
-    <!-- <menuitem id="menu_pos_external_uom" name="External UOM" parent="menu_pos_external_objects"
-        action="action_pos_uom" /> -->
-
-    <menuitem
+    <!-- <menuitem
         id="menu_pos_external_attribute"
         name="External Attributes"
         parent="menu_pos_external_objects"
         action="action_pos_attributes"
-    />
-    <menuitem
+    /> -->
+    <!-- <menuitem
         id="menu_pos_external_values"
         name="External Attribute Values"
         parent="menu_pos_external_objects"
         action="action_pos_values"
-    />
+    /> -->
     <menuitem
         id="menu_pos_external_categories"
         name="External Categories"
         parent="menu_pos_external_objects"
         action="action_pos_categories"
     />
-    <menuitem
+    <!-- <menuitem
         id="menu_pos_external_products"
         name="External Products"
         parent="menu_pos_external_objects"
         action="action_pos_products"
-    />
+    /> -->
 </odoo>
