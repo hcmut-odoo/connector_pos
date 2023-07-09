@@ -276,20 +276,20 @@ class PosBackend(models.Model):
         :return: True if the base data synchronization is successful.
         :rtype: bool
         """
-        for backend in self:
-            for model_name in [
-                # Haven't been implemented yet
-                # "pos.res.country",
-                # "pos.res.currency",
-                # "pos.account.tax",
-            ]:
-                with backend.work_on(model_name) as work:
-                    importer = work.component(usage="auto.matching.importer")
-                    importer.run()
+        # Haven't been implemented yet
+        # for backend in self:
+        #     for model_name in [
+        #         # "pos.res.country",
+        #         # "pos.res.currency",
+        #         # "pos.account.tax",
+        #     ]:
+        #         with backend.work_on(model_name) as work:
+        #             importer = work.component(usage="auto.matching.importer")
+        #             importer.run()
 
-            self.env["pos.account.tax.group"].import_batch(backend)
-            self.env["pos.sale.order.state"].import_batch(backend)
-
+        #     self.env["pos.account.tax.group"].import_batch(backend)
+        #     self.env["pos.sale.order.state"].import_batch(backend)
+        print("doing synchonize ....")
         return True
 
     def _check_connection(self):
@@ -309,7 +309,7 @@ class PosBackend(models.Model):
         with self.work_on("pos.backend") as work:
             component = work.component_by_name(name="pos.adapter.test")
             with api_handle_errors("Connection failed"):
-                component.head()
+                component.connect()
 
     def button_check_connection(self):
         """
@@ -639,4 +639,4 @@ class NoModelAdapter(Component):
     _name = "pos.adapter.test"
     _inherit = "pos.adapter"
     _apply_on = "pos.backend"
-    _pos_model = ""
+    _pos_model = "check-connection"
