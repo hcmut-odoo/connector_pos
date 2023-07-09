@@ -107,7 +107,7 @@ class ProductCategoryMapper(Component):
 class ProductCategoryImporter(Component):
     """
     This class represents the importer for POS product categories.
-    It extends the base `pos.translatable.record.importer` component.
+    It extends the base `pos.direct.batch.importer` component.
 
     :param _model_name: The name of the model associated with the importer 
     (`pos.product.category`).
@@ -118,7 +118,7 @@ class ProductCategoryImporter(Component):
     """
 
     _name = "pos.product.category.importer"
-    _inherit = "pos.translatable.record.importer"
+    _inherit = "pos.direct.batch.importer"
     _apply_on = "pos.product.category"
     _model_name = "pos.product.category"
 

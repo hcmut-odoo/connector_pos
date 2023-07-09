@@ -86,6 +86,19 @@ class PosProductCategory(models.Model):
     active = fields.Boolean(string="Active", default=True)
     position = fields.Integer(string="Position")
 
+    def import_product_categories(self, backend, since_date=None, **kwargs):
+        filters = None
+        now_fmt = fields.Datetime.now()
+        if since_date:
+            filters = {'updated_at': {'operator': 'gt', 'value': since_date}}
+        else:
+            filters = {'updated_at': {'operator': 'lt', 'value': now_fmt}}
+
+        self.env["pos.product.category"].import_batch(
+            backend, filters=filters, priority=10
+        )
+        backend.import_categories_from_date = now_fmt
+        return True
 
 class ProductCategoryAdapter(Component):
     """
