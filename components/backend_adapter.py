@@ -295,3 +295,18 @@ class GenericAdapter(AbstractComponent):
         """
         """HEAD"""
         return self.client.head(self._pos_model, resource_id=id_)
+    
+    @retryable_error
+    def connect(self):
+        """
+        Send a POST request with API_KEY to check connection with backend.
+
+        Returns:
+            dict: A dictionary containing the message of connection.
+
+        Raises:
+            Exception: If an error occurs during the POST request.
+
+        """
+        """HEAD"""
+        return self.client.connect(self._pos_model)
