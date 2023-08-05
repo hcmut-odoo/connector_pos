@@ -1,5 +1,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
+import datetime
 import logging
 
 from odoo import _
@@ -23,22 +24,10 @@ class PartnerImportMapper(Component):
         ("date_add", "date_add"),
         ("date_upd", "date_upd"),
         ("email", "email"),
-        # ("newsletter", "newsletter"),
         ("company", "company"),
         ("active", "active"),
         ("note", "comment"),
-        # (external_to_m2o("id_shop_group"), "shop_group_id"),
-        # (external_to_m2o("id_shop"), "shop_id"),
-        # (external_to_m2o("id_default_group"), "default_category_id"),
     ]
-
-    @mapping
-    def pricelist(self, record):
-        binder = self.binder_for("pos.groups.pricelist")
-        pricelist = binder.to_internal(record["id_default_group"], unwrap=True)
-        if not pricelist:
-            return {}
-        return {"property_product_pricelist": pricelist.id}
 
     @mapping
     def is_company(self, record):
@@ -54,44 +43,37 @@ class PartnerImportMapper(Component):
 
     @mapping
     def name(self, record):
-        parts = [record["firstname"], record["lastname"]]
-        name = " ".join(p.strip() for p in parts if p.strip())
-        return {"name": name}
-
-    # @mapping
-    # def groups(self, record):
-    #     groups = (
-    #         record.get("associations", {})
-    #         .get("groups", {})
-    #         .get(self.backend_record.get_version_ps_key("group"), [])
-    #     )
-    #     if not isinstance(groups, list):
-    #         groups = [groups]
-    #     model_name = "pos.res.partner.category"
-    #     partner_category_bindings = self.env[model_name].browse()
-    #     binder = self.binder_for(model_name)
-    #     for group in groups:
-    #         partner_category_bindings |= binder.to_internal(group["id"])
-
-    #     result = {
-    #         "group_ids": [(6, 0, partner_category_bindings.ids)],
-    #         "category_id": [(4, b.odoo_id.id) for b in partner_category_bindings],
-    #     }
-    #     return result
+        if record["name"] is None:
+            return {"name": ""}
+        return {"name": record["name"]}
 
     @mapping
-    def lang(self, record):
-        binder = self.binder_for("pos.res.lang")
-        erp_lang = None
-        # We can't put unactive lang so ensure it is active.
-        # if not lang, take the one on company
-        if record.get("id_lang"):
-            erp_lang = binder.to_internal(record["id_lang"])
-            erp_lang = erp_lang.filtered("active")
-            lang = erp_lang.code
-        if not erp_lang:
-            lang = self.env.company.partner_id.lang
-        return {"lang": lang}
+    def data_add(self, record):
+        """
+        Mapping function for the "date_add" field of the POS category.
+
+        :param record: The record from the POS category data.
+        :type record: dict
+        :return: The mapped value for the "date_add" field in the Odoo model.
+        :rtype: dict
+        """
+        if record["created_at"] == "0000-00-00 00:00:00":
+            return {"date_add": datetime.datetime.now()}
+        return {"date_add": record["created_at"]}
+
+    @mapping
+    def data_upd(self, record):
+        """
+        Mapping function for the "date_upd" field of the POS category.
+
+        :param record: The record from the POS category data.
+        :type record: dict
+        :return: The mapped value for the "date_upd" field in the Odoo model.
+        :rtype: dict
+        """
+        if record["updated_at"] == "0000-00-00 00:00:00":
+            return {"date_upd": datetime.datetime.now()}
+        return {"date_upd": record["updated_at"]}
 
     @mapping
     def company_id(self, record):
@@ -104,25 +86,9 @@ class ResPartnerImporter(Component):
     _apply_on = "pos.res.partner"
 
     def _import_dependencies(self):
-        # groups = (
-        #     self.pos_record.get("associations", {})
-        #     .get("groups", {})
-        #     .get(self.backend_record.get_version_ps_key("group"), [])
-        # )
-        # if not isinstance(groups, list):
-        #     groups = [groups]
-        # for group in groups:
-        #     self._import_dependency(group["id"], "pos.res.partner.category")
         pass
 
     def _after_import(self, binding):
-        # super()._after_import(binding)
-        # binder = self.binder_for()
-        # ps_id = binder.to_external(binding)
-        # self.env["pos.address"].with_delay(priority=10).import_batch(
-        #     backend=self.backend_record,
-        #     filters={"filter[id_customer]": "%d" % (ps_id,)},
-        # )
         pass
 
 
@@ -147,113 +113,108 @@ class PartnerBatchImporter(Component):
         return {'backend_id': self.backend_record.id}
 
 
-# class AddressImportMapper(Component):
-#     _name = "pos.address.mappper"
-#     _inherit = "pos.import.mapper"
-#     _apply_on = "pos.address"
+class AddressImportMapper(Component):
+    _name = "pos.address.mappper"
+    _inherit = "pos.import.mapper"
+    _apply_on = "pos.address"
 
-#     direct = [
-#         ("address1", "street"),
-#         ("address2", "street2"),
-#         ("city", "city"),
-#         ("other", "comment"),
-#         ("phone", "phone"),
-#         ("phone_mobile", "mobile"),
-#         ("postcode", "zip"),
-#         ("date_add", "date_add"),
-#         ("date_upd", "date_upd"),
-#         ("alias", "alias"),
-#         ("company", "company"),
-#         (external_to_m2o("id_customer"), "pos_partner_id"),
-#     ]
+    direct = [
+        ("address1", "address"),
+        ("phone", "phone_number"),
+        ("date_add", "created_at"),
+        ("date_upd", "updated_at"),
+        ("alias", "alias"),
+        ("company", "company"),
+        (external_to_m2o("id_customer"), "pos_partner_id"),
+    ]
 
-#     @mapping
-#     def backend_id(self, record):
-#         return {"backend_id": self.backend_record.id}
+    @mapping
+    def backend_id(self, record):
+        return {"backend_id": self.backend_record.id}
 
-#     @mapping
-#     def parent_id(self, record):
-#         binder = self.binder_for("pos.res.partner")
-#         parent = binder.to_internal(record["id_customer"], unwrap=True)
-#         return {"parent_id": parent.id}
+    @mapping
+    def parent_id(self, record):
+        binder = self.binder_for("pos.res.partner")
+        parent = binder.to_internal(record["id_customer"], unwrap=True)
+        return {"parent_id": parent.id}
 
-#     @mapping
-#     def name(self, record):
-#         parts = [record["firstname"], record["lastname"]]
-#         name = " ".join(p.strip() for p in parts if p.strip())
-#         return {"name": name}
+    @mapping
+    def name(self, record):
+        parts = [record["name"]]
+        name = " ".join(p.strip() for p in parts if p.strip())
+        return {"name": name}
 
-#     @mapping
-#     def country(self, record):
-#         if record.get("id_country"):
-#             binder = self.binder_for("pos.res.country")
-#             country = binder.to_internal(record["id_country"], unwrap=True)
-#             return {"country_id": country.id}
-#         return {}
+    @mapping
+    def country(self, record):
+        if record.get("id_country"):
+            binder = self.binder_for("pos.res.country")
+            country = binder.to_internal(record["id_country"], unwrap=True)
+            return {"country_id": country.id}
+        return {}
 
-#     @mapping
-#     def company_id(self, record):
-#         return {"company_id": self.backend_record.company_id.id}
+    @mapping
+    def company_id(self, record):
+        return {"company_id": self.backend_record.company_id.id}
 
-#     @only_create
-#     @mapping
-#     def type(self, record):
-#         # do not set 'contact', otherwise the address fields are shared with
-#         # the parent
-#         return {"type": record.get("address_type", "other")}
+    @only_create
+    @mapping
+    def type(self, record):
+        # do not set 'contact', otherwise the address fields are shared with
+        # the parent
+        return {"type": record.get("address_type", "other")}
 
 
-# class AddressImporter(Component):
-#     _name = "pos.address.importer"
-#     _inherit = "pos.importer"
-#     _apply_on = "pos.address"
+class AddressImporter(Component):
+    _name = "pos.address.importer"
+    _inherit = "pos.importer"
+    _apply_on = "pos.address"
 
-#     def run(self, pos_id, **kwargs):
-#         if "address_type" in kwargs:
-#             self._address_type = kwargs.pop("address_type")
-#         # else: let mapper to set default value
-#         super().run(pos_id, **kwargs)
+    def run(self, pos_id, **kwargs):
+        if "address_type" in kwargs:
+            self._address_type = kwargs.pop("address_type")
+        # else: let mapper to set default value
+        super().run(pos_id, **kwargs)
 
-#     def _map_data(self):
-#         map_record = super()._map_data()
-#         try:
-#             map_record.source["address_type"] = self._address_type
-#         except AttributeError:  # pragma: no cover
-#             pass  # let mapper to set default value
-#         return map_record
+    def _map_data(self):
+        map_record = super()._map_data()
+        try:
+            map_record.source["address_type"] = self._address_type
+        except AttributeError:  # pragma: no cover
+            pass  # let mapper to set default value
+        return map_record
 
-#     def _check_vat(self, vat_number, partner_country):
-#         vat_country, vat_number_ = self.env["res.partner"]._split_vat(vat_number)
-#         if not self.env["res.partner"].simple_vat_check(vat_country, vat_number_):
-#             # if fails, check with country code from country
-#             country_code = partner_country.code
-#             if country_code:
-#                 if not self.env["res.partner"].simple_vat_check(
-#                     country_code.lower(), vat_number
-#                 ):
-#                     return False
-#         return True
+    def _check_vat(self, vat_number, partner_country):
+        vat_country, vat_number_ = self.env["res.partner"]._split_vat(vat_number)
+        if not self.env["res.partner"].simple_vat_check(vat_country, vat_number_):
+            # if fails, check with country code from country
+            country_code = partner_country.code
+            if country_code:
+                if not self.env["res.partner"].simple_vat_check(
+                    country_code.lower(), vat_number
+                ):
+                    return False
+        return True
 
-#     def _after_import(self, binding):
-#         record = self.pos_record
-#         vat_number = None
-#         if record["vat_number"]:
-#             vat_number = record["vat_number"].replace(".", "").replace(" ", "")
-#         # TODO move to custom localization module
-#         elif not record["vat_number"] and record.get("dni"):
-#             vat_number = (
-#                 record["dni"].replace(".", "").replace(" ", "").replace("-", "")
-#             )
-#         if vat_number:
-#             if self._check_vat(vat_number, binding.odoo_id.country_id):
-#                 binding.parent_id.write({"vat": vat_number})
-#             else:
-#                 msg = _("Please, check the VAT number: %s") % vat_number
-#                 # TODO create activity to warn the vat is incorrect ?
-#                 _logger.warn(msg)
+    def _after_import(self, binding):
+        record = self.pos_record
+        vat_number = None
+        if record["vat_number"]:
+            vat_number = record["vat_number"].replace(".", "").replace(" ", "")
+        # TODO move to custom localization module
+        elif not record["vat_number"] and record.get("dni"):
+            vat_number = (
+                record["dni"].replace(".", "").replace(" ", "").replace("-", "")
+            )
+        if vat_number:
+            if self._check_vat(vat_number, binding.odoo_id.country_id):
+                binding.parent_id.write({"vat": vat_number})
+            else:
+                msg = _("Please, check the VAT number: %s") % vat_number
+                # TODO create activity to warn the vat is incorrect ?
+                _logger.warn(msg)
 
 
-# class AddressBatchImporter(Component):
-#     _name = "pos.address.batch.importer"
-#     _inherit = "pos.delayed.batch.importer"
-#     _apply_on = "pos.address"
+class AddressBatchImporter(Component):
+    _name = "pos.address.batch.importer"
+    _inherit = "pos.delayed.batch.importer"
+    _apply_on = "pos.address"

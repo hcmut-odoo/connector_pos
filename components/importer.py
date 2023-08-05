@@ -75,10 +75,11 @@ class PosImporter(AbstractComponent):
         self.pos_record = None
 
 
-    def _get_prestashop_data(self):
+    def _get_pos_data(self):
         """
         Return the raw Pos data for `self.pos_id`.
         """
+        print('_get_pos_data', self.pos_id)
         return self.backend_adapter.read(self.pos_id)
 
 
@@ -401,13 +402,14 @@ class BatchImporter(AbstractComponent):
 
         # Make a copy of filters to prevent applying the parameters to other batch imports
         filters = filters.copy()
-        page_number = 0
-        filters["limit"] = "%d,%d" % (page_number * self.page_size, self.page_size)
-        record_ids = self._run_page(filters, **kwargs)
-        while len(record_ids) == self.page_size:
-            page_number += 1
-            filters["limit"] = "%d,%d" % (page_number * self.page_size, self.page_size)
-            record_ids = self._run_page(filters, **kwargs)
+        # page_number = 0
+        # filters["limit"] = "%d" % (page_number * self.page_size, self.page_size)
+        # record_ids = self._run_page(filters, **kwargs)
+        # while len(record_ids) == self.page_size:
+        #     page_number += 1
+        #     filters["limit"] = "%d,%d" % (page_number * self.page_size, self.page_size)
+        print('run in importer', filters)
+        self._run_page(filters, **kwargs)
 
     def _run_page(self, filters, **kwargs):
         """
@@ -419,8 +421,9 @@ class BatchImporter(AbstractComponent):
         :return: The list of record IDs processed in this page.
         :rtype: list
         """
+        print('_run_page')
         record_ids = self.backend_adapter.search(filters)
-
+        print(record_ids)
         for record_id in record_ids:
             self._import_record(record_id, **kwargs)
 
@@ -457,13 +460,14 @@ class DirectBatchImporter(AbstractComponent):
     _name = "pos.direct.batch.importer"
     _inherit = "pos.batch.importer"
     _model_name = None
-
+    
     def _import_record(self, external_id):
         """
         Import a record directly.
 
         :param external_id: The external ID of the record to be imported.
         """
+        print("DirectBatchImporter")
         self.env[self.model._name].import_record(
             backend=self.backend_record, pos_id=external_id
         )
@@ -498,6 +502,7 @@ class DelayedBatchImporter(AbstractComponent):
         :param external_id: The external ID of the record to be imported.
         :param kwargs: Additional keyword arguments for configuring the delayed import.
         """
+        print("DelayedBatchImporter")
         priority = kwargs.pop("priority", None)
         eta = kwargs.pop("eta", None)
         max_retries = kwargs.pop("max_retries", None)
