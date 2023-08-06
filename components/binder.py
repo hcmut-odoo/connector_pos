@@ -20,5 +20,6 @@ class PosModelBinder(Component):
     _apply_on = [
         "pos.store",
         "pos.product.category",
-        "pos.res.partner"
+        "pos.res.partner",
+        "pos.address",
     ]
