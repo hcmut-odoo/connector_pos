@@ -95,8 +95,9 @@ class PosProductCategory(models.Model):
             filters = {'updated_at': {'operator': 'lt', 'value': now_fmt}}
 
         self.env["pos.product.category"].import_batch(
-            backend, filters=filters, priority=10
+            backend, filters={'filters': filters}, priority=10
         )
+
         backend.import_categories_from_date = now_fmt
         return True
 

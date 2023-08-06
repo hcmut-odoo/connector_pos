@@ -3,6 +3,7 @@
 import base64
 import logging
 from contextlib import contextmanager
+from urllib.parse import urljoin
 
 from ...pospyt.pospyt import (
     PosWebservice,
@@ -163,10 +164,11 @@ class GenericAdapter(AbstractComponent):
             Exception: If an error occurs during the search operation.
 
         """
-        _logger.debug(
+        print(
             "method search, model %s, filters %s", self._pos_model, str(filters)
         )
-        return self.client.search(self._pos_model, filters)
+        print("method search, model %s, filters %s", self._pos_model, str(filters))
+        return self.client.search(self._pos_model + "/list", filters)
 
 
     @retryable_error
@@ -186,15 +188,15 @@ class GenericAdapter(AbstractComponent):
             Exception: If an error occurs during the retrieval.
 
         """
-        _logger.debug(
-            "method read, model %s id %s, attributes %s",
-            self._pos_model,
-            str(id_),
-            str(attributes),
+        print(
+            f"method read, model {self._pos_model} id {id_}, attributes {attributes}"
         )
-        res = self.client.get(self._pos_model, id_, options=attributes)
-        first_key = list(res)[0]
-        return res[first_key]
+
+        if attributes is None:
+            attributes = {}
+
+        res = self.client.get(self._pos_model + f"/find/{id_}", id_, options=attributes)
+        return res.get('data')
 
 
     def create(self, attributes=None):
@@ -213,11 +215,10 @@ class GenericAdapter(AbstractComponent):
             Exception: If an error occurs during the creation operation.
 
         """
-        _logger.debug(
-            "method create, model %s, attributes %s",
-            self._prestashop_model,
-            str(attributes),
+        print(
+            f"method create, model {self._prestashop_model}, attributes {str(attributes)}"
         )
+
         res = self.client.add(
             self._prestashop_model, {self._export_node_name: attributes}
         )
@@ -244,7 +245,7 @@ class GenericAdapter(AbstractComponent):
 
         """
         attributes["id"] = id_
-        _logger.debug(
+        print(
             "method write, model %s, attributes %s",
             self._pos_model,
             str(attributes),
@@ -274,7 +275,7 @@ class GenericAdapter(AbstractComponent):
             Exception: If an error occurs during the delete operation.
 
         """
-        _logger.debug("method delete, model %s, ids %s", resource, str(ids))
+        print("method delete, model %s, ids %s", resource, str(ids))
         # Delete a record(s) on the external system
         return self.client.delete(resource, ids)
 
