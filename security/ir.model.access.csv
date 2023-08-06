@@ -3,3 +3,4 @@ access_pos_backend_full,Full access on pos.backend,model_pos_backend,connector.g
 access_pos_binding_full,Full access on pos.binding,model_pos_binding,connector.group_connector_manager,1,1,1,1
 pos_res_partner,pos_res_partner,model_pos_res_partner,base.group_user,1,1,1,1
 pos_address,pos_address,model_pos_address,base.group_user,1,1,1,1
+pos_product_category,pos_product_category,model_pos_product_category,base.group_user,1,1,1,1
