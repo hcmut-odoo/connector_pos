@@ -168,7 +168,7 @@ class GenericAdapter(AbstractComponent):
             "method search, model %s, filters %s", self._pos_model, str(filters)
         )
         print("method search, model %s, filters %s", self._pos_model, str(filters))
-        return self.client.search(self._pos_model + "/list", filters)
+        return self.client.search(self._pos_model, filters)
 
 
     @retryable_error
@@ -195,7 +195,7 @@ class GenericAdapter(AbstractComponent):
         if attributes is None:
             attributes = {}
 
-        res = self.client.get(self._pos_model + f"/find/{id_}", id_, options=attributes)
+        res = self.client.get(self._pos_model, id_, options=attributes)
         return res.get('data')
 
 
