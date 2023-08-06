@@ -74,28 +74,17 @@ class PosProductCategory(models.Model):
     default_backend_id = fields.Many2one(comodel_name="pos.backend")
     date_add = fields.Datetime(string="Created At (on POS)", readonly=True)
     date_upd = fields.Datetime(string="Updated At (on POS)", readonly=True)
-    description = fields.Html(
-        string="Description",
-        translate=True,
-        help="HTML description from the POS",
-    )
-    link_rewrite = fields.Char(string="Friendly URL", translate=True)
-    meta_description = fields.Char(string="Meta description", translate=True)
-    meta_keywords = fields.Char(string="Meta keywords", translate=True)
-    meta_title = fields.Char(string="Meta title", translate=True)
-    active = fields.Boolean(string="Active", default=True)
-    position = fields.Integer(string="Position")
 
     def import_product_categories(self, backend, since_date=None, **kwargs):
-        filters = None
         now_fmt = fields.Datetime.now()
+
         if since_date:
-            filters = {'updated_at': {'operator': 'gt', 'value': since_date}}
+            date = {'start': since_date}
         else:
-            filters = {'updated_at': {'operator': 'lt', 'value': now_fmt}}
+            date = {'end': now_fmt}
 
         self.env["pos.product.category"].import_batch(
-            backend, filters={'filters': filters}, priority=10
+            backend, filters={'action': 'list', 'date': date}, priority=10, **kwargs
         )
 
         backend.import_categories_from_date = now_fmt
@@ -121,6 +110,6 @@ class ProductCategoryAdapter(Component):
     _apply_on = "pos.product.category"
     
     _model_name = "pos.product.category"
-    _pos_model = "categories"
+    _pos_model = "category"
     _export_node_name = "category"
     _export_node_name_res = "category"
