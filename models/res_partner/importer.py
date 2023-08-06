@@ -15,14 +15,19 @@ from odoo.addons.connector.components.mapper import (
 _logger = logging.getLogger(__name__)
 
 
+def parse_date_string(date_string):
+    return datetime.datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+
+def format_date_string(date_obj):
+    return date_obj.strftime('%Y-%m-%d %H:%M:%S')
+
 class PartnerImportMapper(Component):
     _name = "pos.res.partner.mapper"
     _inherit = "pos.import.mapper"
     _apply_on = "pos.res.partner"
 
     direct = [
-        ("date_add", "date_add"),
-        ("date_upd", "date_upd"),
+        ("address", "city"),
         ("email", "email"),
         ("company", "company"),
         ("active", "active"),
@@ -57,9 +62,12 @@ class PartnerImportMapper(Component):
         :return: The mapped value for the "date_add" field in the Odoo model.
         :rtype: dict
         """
-        if record["created_at"] == "0000-00-00 00:00:00":
-            return {"date_add": datetime.datetime.now()}
-        return {"date_add": record["created_at"]}
+        if record["created_at"] is None or record["created_at"] == "0000-00-00 00:00:00":
+            date_add = datetime.datetime.now()
+        else:
+            date_add = parse_date_string(record["created_at"])
+
+        return {"date_add": format_date_string(date_add)}
 
     @mapping
     def data_upd(self, record):
@@ -71,13 +79,24 @@ class PartnerImportMapper(Component):
         :return: The mapped value for the "date_upd" field in the Odoo model.
         :rtype: dict
         """
-        if record["updated_at"] == "0000-00-00 00:00:00":
-            return {"date_upd": datetime.datetime.now()}
-        return {"date_upd": record["updated_at"]}
+        if record["updated_at"] is None or record["updated_at"] == "0000-00-00 00:00:00":
+            date_upd = datetime.datetime.now()
+        else:
+            date_upd = parse_date_string(record["updated_at"])
+
+        return {"date_upd": format_date_string(date_upd)}
 
     @mapping
     def company_id(self, record):
         return {"company_id": self.backend_record.company_id.id}
+    
+    @mapping
+    def phone(self, record):
+        if record["phone_number"] is None:
+            return {"phone": ""}
+        return {"phone": record["phone_number"]}
+    
+    
 
 
 class ResPartnerImporter(Component):
@@ -89,6 +108,14 @@ class ResPartnerImporter(Component):
         pass
 
     def _after_import(self, binding):
+        # super()._after_import(binding)
+        # binder = self.binder_for()
+        # ps_id = binder.to_external(binding)
+        # print('ps_id', ps_id)
+        # self.env["pos.address"].with_delay(priority=10).import_record(
+        #     backend=self.backend_record,
+        #     pos_id = ps_id
+        # )
         pass
 
 
@@ -119,49 +146,100 @@ class AddressImportMapper(Component):
     _apply_on = "pos.address"
 
     direct = [
-        ("address1", "address"),
-        ("phone", "phone_number"),
-        ("date_add", "created_at"),
-        ("date_upd", "updated_at"),
-        ("alias", "alias"),
-        ("company", "company"),
-        (external_to_m2o("id_customer"), "pos_partner_id"),
+        ("address", "street"),
+        # ("address2", "street2"),
+        # ("city", "city"),
+        # ("other", "comment"),
+        # ("phone", "phone"),
+        # ("phone_mobile", "mobile"),
+        # ("postcode", "zip"),
+        # ("date_add", "date_add"),
+        # ("date_upd", "date_upd"),
+        # ("alias", "alias"),
+        # ("company", "company"),
+        # (external_to_m2o("id_customer"), "prestashop_partner_id"),
     ]
 
+    @mapping
+    def data_add(self, record):
+        """
+        Mapping function for the "date_add" field of the POS category.
+
+        :param record: The record from the POS category data.
+        :type record: dict
+        :return: The mapped value for the "date_add" field in the Odoo model.
+        :rtype: dict
+        """
+        if record["created_at"] is None or record["created_at"] == "0000-00-00 00:00:00":
+            date_add = datetime.datetime.now()
+        else:
+            date_add = parse_date_string(record["created_at"])
+
+        return {"date_add": format_date_string(date_add)}
+
+    @mapping
+    def data_upd(self, record):
+        """
+        Mapping function for the "date_upd" field of the POS category.
+
+        :param record: The record from the POS category data.
+        :type record: dict
+        :return: The mapped value for the "date_upd" field in the Odoo model.
+        :rtype: dict
+        """
+        if record["updated_at"] is None or record["updated_at"] == "0000-00-00 00:00:00":
+            date_upd = datetime.datetime.now()
+        else:
+            date_upd = parse_date_string(record["updated_at"])
+
+        return {"date_upd": format_date_string(date_upd)}
+    
+    # @mapping
+    # def address1(self, record):
+    #     if record["address"] is None:
+    #         return {"addre": ""}
+    #     return {"address1": record["address"]}
+    
+    @mapping
+    def phone(self, record):
+        if record["phone_number"] is None:
+            return {"phone": ""}
+        return {"phone": record["phone_number"]}
+    
     @mapping
     def backend_id(self, record):
         return {"backend_id": self.backend_record.id}
 
-    @mapping
-    def parent_id(self, record):
-        binder = self.binder_for("pos.res.partner")
-        parent = binder.to_internal(record["id_customer"], unwrap=True)
-        return {"parent_id": parent.id}
+    # @mapping
+    # def parent_id(self, record):
+    #     binder = self.binder_for("pos.res.partner")
+    #     parent = binder.to_internal(record["id_customer"], unwrap=True)
+    #     return {"parent_id": parent.id}
 
-    @mapping
-    def name(self, record):
-        parts = [record["name"]]
-        name = " ".join(p.strip() for p in parts if p.strip())
-        return {"name": name}
+    # @mapping
+    # def name(self, record):
+    #     parts = [record["name"]]
+    #     name = " ".join(p.strip() for p in parts if p.strip())
+    #     return {"name": name}
 
-    @mapping
-    def country(self, record):
-        if record.get("id_country"):
-            binder = self.binder_for("pos.res.country")
-            country = binder.to_internal(record["id_country"], unwrap=True)
-            return {"country_id": country.id}
-        return {}
+    # @mapping
+    # def country(self, record):
+    #     if record.get("id_country"):
+    #         binder = self.binder_for("pos.res.country")
+    #         country = binder.to_internal(record["id_country"], unwrap=True)
+    #         return {"country_id": country.id}
+    #     return {}
 
-    @mapping
-    def company_id(self, record):
-        return {"company_id": self.backend_record.company_id.id}
+    # @mapping
+    # def company_id(self, record):
+    #     return {"company_id": self.backend_record.company_id.id}
 
-    @only_create
-    @mapping
-    def type(self, record):
-        # do not set 'contact', otherwise the address fields are shared with
-        # the parent
-        return {"type": record.get("address_type", "other")}
+    # @only_create
+    # @mapping
+    # def type(self, record):
+    #     # do not set 'contact', otherwise the address fields are shared with
+    #     # the parent
+    #     return {"type": record.get("address_type", "other")}
 
 
 class AddressImporter(Component):
@@ -218,3 +296,4 @@ class AddressBatchImporter(Component):
     _name = "pos.address.batch.importer"
     _inherit = "pos.delayed.batch.importer"
     _apply_on = "pos.address"
+

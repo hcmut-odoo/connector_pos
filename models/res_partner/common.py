@@ -47,20 +47,17 @@ class PosResPartner(models.Model):
     )
 
     def import_customers_since(self, backend_record=None, since_date=None, **kwargs):
-        """Prepare the import of partners modified on Pos"""
-        filters = None        
-        # now_fmt = fields.Datetime.now()
-        # now_fmt= json.dumps(now_fmt, default=lambda x: x.isoformat())
-        # since_date = json.dumps(since_date, default=lambda x: x.isoformat())
-        now_fmt = '2023-08-04 19:26:13'
-        since_date = '2020-08-04 19:26:13'
+        """Prepare the import of partners modified on Pos"""   
+        now_fmt =  fields.Datetime.now()
+
         if since_date:
-            filters = {'updated_at': {'operator': 'gt', 'value': since_date}}
+            date = {'start': since_date}
         else:
-            filters = {'updated_at': {'operator': 'lt', 'value': now_fmt}}
+            date = {'end': now_fmt}
+
 
         self.env["pos.res.partner"].import_batch(
-            backend=backend_record, filters={}, priority=15, **kwargs
+            backend=backend_record, filters={'date': date, 'action': 'list'}, priority=15, **kwargs
         )
 
         backend_record.import_partners_since = now_fmt
@@ -124,6 +121,6 @@ class PartnerAddressAdapter(Component):
     _name = "pos.address.adapter"
     _inherit = "pos.adapter"
     _apply_on = "pos.address"
-    _pos_model = "addresses"
+    _pos_model = "address"
 
 

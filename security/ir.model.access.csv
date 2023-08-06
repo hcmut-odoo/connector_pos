@@ -2,3 +2,4 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_pos_backend_full,Full access on pos.backend,model_pos_backend,connector.group_connector_manager,1,1,1,1
 access_pos_binding_full,Full access on pos.binding,model_pos_binding,connector.group_connector_manager,1,1,1,1
 pos_res_partner,pos_res_partner,model_pos_res_partner,base.group_user,1,1,1,1
+pos_address,pos_address,model_pos_address,base.group_user,1,1,1,1
