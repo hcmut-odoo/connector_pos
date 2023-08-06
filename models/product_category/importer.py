@@ -6,6 +6,11 @@ from odoo import _
 from odoo.addons.component.core import Component
 from odoo.addons.connector.components.mapper import external_to_m2o, mapping
 
+from ...utils.datetime import (
+    format_date_string,
+    parse_date_string
+)
+
 _logger = logging.getLogger(__name__)
 try:
     from ....pospyt.pospyt import PosWebServiceError
@@ -32,48 +37,8 @@ class ProductCategoryMapper(Component):
     _model_name = "pos.product.category"
 
     direct = [
-        ("description", "description"),
-        ("link_rewrite", "link_rewrite"),
-        ("meta_description", "meta_description"),
-        ("meta_keywords", "meta_keywords"),
-        ("meta_title", "meta_title"),
-        (external_to_m2o("id_shop_default"), "default_shop_id"),
-        ("active", "active"),
-        ("position", "position"),
+        ("name", "name")
     ]
-
-    @mapping
-    def name(self, record):
-        """
-        Mapping function for the "name" field of the POS category.
-
-        :param record: The record from the POS category data.
-        :type record: dict
-        :return: The mapped value for the "name" field in the Odoo model.
-        :rtype: dict
-        """
-        if record["name"] is None:
-            return {"name": ""}
-        return {"name": record["name"]}
-
-    @mapping
-    def parent_id(self, record):
-        """
-        Mapping function for the "parent_id" field of the POS category.
-
-        :param record: The record from the POS category data.
-        :type record: dict
-        :return: The mapped value for the "parent_id" field in the Odoo model.
-        :rtype: dict
-        """
-        if record["id_parent"] == "0":
-            return {}
-        category = self.binder_for("pos.product.category").to_internal(
-            record["id_parent"], unwrap=True
-        )
-        return {
-            "parent_id": category.id,
-        }
 
     @mapping
     def data_add(self, record):
@@ -85,9 +50,12 @@ class ProductCategoryMapper(Component):
         :return: The mapped value for the "date_add" field in the Odoo model.
         :rtype: dict
         """
-        if record["date_add"] == "0000-00-00 00:00:00":
-            return {"date_add": datetime.datetime.now()}
-        return {"date_add": record["date_add"]}
+        if record["created_at"] is None or record["created_at"] == "0000-00-00 00:00:00":
+            date_add = datetime.datetime.now()
+        else:
+            date_add = parse_date_string(record["created_at"])
+
+        return {"date_add": format_date_string(date_add)}
 
     @mapping
     def data_upd(self, record):
@@ -99,9 +67,12 @@ class ProductCategoryMapper(Component):
         :return: The mapped value for the "date_upd" field in the Odoo model.
         :rtype: dict
         """
-        if record["date_upd"] == "0000-00-00 00:00:00":
-            return {"date_upd": datetime.datetime.now()}
-        return {"date_upd": record["date_upd"]}
+        if record["updated_at"] is None or record["updated_at"] == "0000-00-00 00:00:00":
+            date_upd = datetime.datetime.now()
+        else:
+            date_upd = parse_date_string(record["updated_at"])
+
+        return {"date_upd": format_date_string(date_upd)}
 
 
 class ProductCategoryImporter(Component):
@@ -122,17 +93,6 @@ class ProductCategoryImporter(Component):
     _apply_on = "pos.product.category"
     _model_name = "pos.product.category"
 
-    _translatable_fields = {
-        "pos.product.category": [
-            "name",
-            "description",
-            "link_rewrite",
-            "meta_description",
-            "meta_keywords",
-            "meta_title",
-        ],
-    }
-
     def _import_dependencies(self):
         """
         Internal method for importing dependencies of the POS category.
@@ -143,6 +103,9 @@ class ProductCategoryImporter(Component):
         the parent category.
         """
         pass
+
+    def _after_import(self, binding):
+        pass
     
 
 class ProductCategoryBatchImporter(Component):
@@ -151,16 +114,3 @@ class ProductCategoryBatchImporter(Component):
     _apply_on = "pos.product.category"
 
     _model_name = "pos.product.category"
-
-    direct = [
-        ('description', 'description'),
-    ]
-
-    @mapping
-    def name(self, record):
-        if record['name']:
-            return {'name': record['name']}
-
-    @mapping
-    def backend_id(self, record):
-        return {'backend_id': self.backend_record.id}
