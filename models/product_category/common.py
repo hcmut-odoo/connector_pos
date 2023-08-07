@@ -44,20 +44,8 @@ class PosProductCategory(models.Model):
     :type date_add: odoo.fields.Datetime
     :param date_upd: The datetime field indicating the last update date of the POS binding.
     :type date_upd: odoo.fields.Datetime
-    :param description: The HTML field containing the description from the POS.
-    :type description: odoo.fields.Html
-    :param link_rewrite: The char field representing the friendly URL of the POS binding.
-    :type link_rewrite: odoo.fields.Char
-    :param meta_description: The char field representing the meta description of the POS binding.
-    :type meta_description: odoo.fields.Char
-    :param meta_keywords: The char field representing the meta keywords of the POS binding.
-    :type meta_keywords: odoo.fields.Char
-    :param meta_title: The char field representing the meta title of the POS binding.
-    :type meta_title: odoo.fields.Char
-    :param active: The boolean field indicating whether the POS binding is active or not.
-    :type active: odoo.fields.Boolean
-    :param position: The integer field indicating the position of the POS binding.
-    :type position: odoo.fields.Integer
+    :param name: The name field indicating the name of category in POS.
+    :type name: odoo.fields.Chars
     """
 
     _name = "pos.product.category"
@@ -74,28 +62,17 @@ class PosProductCategory(models.Model):
     default_backend_id = fields.Many2one(comodel_name="pos.backend")
     date_add = fields.Datetime(string="Created At (on POS)", readonly=True)
     date_upd = fields.Datetime(string="Updated At (on POS)", readonly=True)
-    description = fields.Html(
-        string="Description",
-        translate=True,
-        help="HTML description from the POS",
-    )
-    link_rewrite = fields.Char(string="Friendly URL", translate=True)
-    meta_description = fields.Char(string="Meta description", translate=True)
-    meta_keywords = fields.Char(string="Meta keywords", translate=True)
-    meta_title = fields.Char(string="Meta title", translate=True)
-    active = fields.Boolean(string="Active", default=True)
-    position = fields.Integer(string="Position")
 
     def import_product_categories(self, backend, since_date=None, **kwargs):
-        filters = None
         now_fmt = fields.Datetime.now()
+
         if since_date:
-            filters = {'updated_at': {'operator': 'gt', 'value': since_date}}
+            date = {'end': since_date}
         else:
-            filters = {'updated_at': {'operator': 'lt', 'value': now_fmt}}
+            date = {'end': now_fmt}
 
         self.env["pos.product.category"].import_batch(
-            backend, filters={'filters': filters}, priority=10
+            backend, filters={'action': 'list', 'date': date}, priority=10, **kwargs
         )
 
         backend.import_categories_from_date = now_fmt
@@ -121,6 +98,6 @@ class ProductCategoryAdapter(Component):
     _apply_on = "pos.product.category"
     
     _model_name = "pos.product.category"
-    _pos_model = "categories"
+    _pos_model = "category"
     _export_node_name = "category"
     _export_node_name_res = "category"
