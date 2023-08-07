@@ -12,14 +12,13 @@ from odoo.addons.connector.components.mapper import (
     only_create,
 )
 
+from ...utils.datetime import (
+    format_date_string,
+    parse_date_string
+)
+
 _logger = logging.getLogger(__name__)
 
-
-def parse_date_string(date_string):
-    return datetime.datetime.fromisoformat(date_string.replace('Z', '+00:00'))
-
-def format_date_string(date_obj):
-    return date_obj.strftime('%Y-%m-%d %H:%M:%S')
 
 class PartnerImportMapper(Component):
     _name = "pos.res.partner.mapper"
