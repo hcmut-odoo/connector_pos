@@ -89,7 +89,7 @@ class ProductCategoryImporter(Component):
     """
 
     _name = "pos.product.category.importer"
-    _inherit = "pos.direct.batch.importer"
+    _inherit = "pos.importer"
     _apply_on = "pos.product.category"
     _model_name = "pos.product.category"
 
