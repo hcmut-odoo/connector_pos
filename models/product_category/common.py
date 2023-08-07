@@ -44,20 +44,8 @@ class PosProductCategory(models.Model):
     :type date_add: odoo.fields.Datetime
     :param date_upd: The datetime field indicating the last update date of the POS binding.
     :type date_upd: odoo.fields.Datetime
-    :param description: The HTML field containing the description from the POS.
-    :type description: odoo.fields.Html
-    :param link_rewrite: The char field representing the friendly URL of the POS binding.
-    :type link_rewrite: odoo.fields.Char
-    :param meta_description: The char field representing the meta description of the POS binding.
-    :type meta_description: odoo.fields.Char
-    :param meta_keywords: The char field representing the meta keywords of the POS binding.
-    :type meta_keywords: odoo.fields.Char
-    :param meta_title: The char field representing the meta title of the POS binding.
-    :type meta_title: odoo.fields.Char
-    :param active: The boolean field indicating whether the POS binding is active or not.
-    :type active: odoo.fields.Boolean
-    :param position: The integer field indicating the position of the POS binding.
-    :type position: odoo.fields.Integer
+    :param name: The name field indicating the name of category in POS.
+    :type name: odoo.fields.Chars
     """
 
     _name = "pos.product.category"
@@ -79,7 +67,7 @@ class PosProductCategory(models.Model):
         now_fmt = fields.Datetime.now()
 
         if since_date:
-            date = {'start': since_date}
+            date = {'end': since_date}
         else:
             date = {'end': now_fmt}
 
