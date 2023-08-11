@@ -156,7 +156,7 @@ class AddressImportMapper(Component):
         # ("date_upd", "date_upd"),
         # ("alias", "alias"),
         # ("company", "company"),
-        # (external_to_m2o("id_customer"), "prestashop_partner_id"),
+        # (external_to_m2o("id_customer"), "pos_partner_id"),
     ]
 
     @mapping

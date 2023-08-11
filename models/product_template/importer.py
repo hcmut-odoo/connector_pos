@@ -32,7 +32,7 @@ except ImportError:
     _logger.debug("Cannot import `bs4`")
 
 try:
-    from pospyt import PosWebServiceError
+    from ....pospyt.pospyt import PosWebServiceError
 except ImportError:
     _logger.debug("Cannot import from `pospyt`")
 
@@ -53,14 +53,14 @@ class TemplateMapper(Component):
 
     @mapping
     def standard_price(self, record):
-        if self.has_combinations(record):
+        if self.has_variants(record):
             return {}
         else:
             return {"standard_price": record.get("wholesale_price", 0.0)}
 
     @mapping
     def weight(self, record):
-        if self.has_combinations(record):
+        if self.has_variants(record):
             return {}
         else:
             return {"weight": record.get("weight", 0.0)}
@@ -109,28 +109,28 @@ class TemplateMapper(Component):
 
         return {"date_upd": format_date_string(date_upd)}
 
-    def has_combinations(self, record):
+    def has_variants(self, record):
         associations = record.get("associations", {})
-        combinations = associations.get("combinations", {})
+        variants = associations.get("variants", {})
 
-        return len(combinations or "") != 0
+        return len(variants or "") != 0
 
-    def _match_combination_odoo_record(self, record):
-        # Browse combinations for matching products and find if there
+    def _match_variant_odoo_record(self, record):
+        # Browse variants for matching products and find if there
         # is a potential template to be matched
         template = self.env["product.template"]
         associations = record.get("associations", {})
-        combinations = associations.get("combinations", {}).get(
-            self.backend_record.get_version_pos_key("combinations")
+        variants = associations.get("variants", {}).get(
+            self.backend_record.get_version_pos_key("variants")
         )
-        if len(combinations) == 1:
-            # Defensive mode when product have no combinations, force
+        if len(variants) == 1:
+            # Defensive mode when product have no variants, force
             # the list mode
-            combinations = [combinations]
-        for prod in combinations:
+            variants = [variants]
+        for prod in variants:
             backend_adapter = self.component(
                 usage="backend.adapter",
-                model_name="pos.product.combination",
+                model_name="pos.product.variant",
             )
             variant = backend_adapter.read(int(prod["id"]))
             code = variant.get(self.backend_record.matching_product_ch)
@@ -144,7 +144,7 @@ class TemplateMapper(Component):
                     raise ValidationError(
                         _(
                             "Error! Multiple products found with "
-                            "combinations reference %s. Maybe consider to "
+                            "variants reference %s. Maybe consider to "
                             "update you datas"
                         )
                         % code
@@ -157,7 +157,7 @@ class TemplateMapper(Component):
                     raise ValidationError(
                         _(
                             "Error! Multiple products found with "
-                            "combinations reference %s. Maybe consider to "
+                            "variants reference %s. Maybe consider to "
                             "update you datas"
                         )
                         % code
@@ -171,7 +171,7 @@ class TemplateMapper(Component):
             raise ValidationError(
                 _(
                     "Error! Multiple templates are found with "
-                    "combinations reference. Maybe consider to change "
+                    "variants reference. Maybe consider to change "
                     "matching option"
                 )
             )
@@ -201,8 +201,8 @@ class TemplateMapper(Component):
         """Will bind the product to an existing one with the same code"""
         if not self.backend_record.matching_product_template:
             return {}
-        if self.has_combinations(record):
-            return self._match_combination_odoo_record(record)
+        if self.has_variants(record):
+            return self._match_variant_odoo_record(record)
         else:
             return self._match_template_odoo_record(record)
 
@@ -220,7 +220,7 @@ class TemplateMapper(Component):
 
     @mapping
     def default_code(self, record):
-        if self.has_combinations(record):
+        if self.has_variants(record):
             return {}
         
         code = record.get("reference")
@@ -294,11 +294,11 @@ class TemplateMapper(Component):
 
     @mapping
     def default_category_id(self, record):
-        if not int(record["id_category_default"]):
+        if not int(record["category_id"]):
             return
         binder = self.binder_for("pos.product.category")
         category = binder.to_internal(
-            record["id_category_default"],
+            record["category_id"],
             unwrap=True,
         )
         if category:
@@ -319,7 +319,7 @@ class TemplateMapper(Component):
 
     @mapping
     def barcode(self, record):
-        if self.has_combinations(record):
+        if self.has_variants(record):
             return {}
         barcode = record.get("barcode") or record.get("ean13")
         if barcode in ["", "0"]:
@@ -387,16 +387,16 @@ class ProductInventoryBatchImporter(Component):
     def _run_page(self, filters, **kwargs):
         records = self.backend_adapter.get(filters)
         for record in records["stock_availables"]["stock_available"]:
-            # if product has combinations then do not import product stock
-            # since combination stocks will be imported
+            # if product has variants then do not import product stock
+            # since variant stocks will be imported
             if record["id_product_attribute"] == "0":
-                combination_stock_ids = self.backend_adapter.search(
+                variant_stock_ids = self.backend_adapter.search(
                     {
                         "filter[id_product]": record["id_product"],
                         "filter[id_product_attribute]": ">[0]",
                     }
                 )
-                if combination_stock_ids:
+                if variant_stock_ids:
                     continue
 
             self._import_record(record["id"], record=record, **kwargs)
@@ -438,7 +438,7 @@ class ProductInventoryImporter(Component):
             binder = self.binder_for("pos.product.template")
             return binder.to_internal(record["id_product"])
         
-        binder = self.binder_for("pos.product.combination")
+        binder = self.binder_for("pos.product.variant")
 
         return binder.to_internal(record["id_product_attribute"])
 
@@ -448,7 +448,7 @@ class ProductInventoryImporter(Component):
         self._import_dependency(record["id_product"], "pos.product.template")
         if record["id_product_attribute"] != "0":
             self._import_dependency(
-                record["id_product_attribute"], "pos.product.combination"
+                record["id_product_attribute"], "pos.product.variant"
             )
 
     def run(self, pos_id, record=None, **kwargs):
@@ -483,7 +483,7 @@ class ProductTemplateImporter(Component):
     """Import one translatable record"""
 
     _name = "pos.product.template.importer"
-    _inherit = "pos.translatable.record.importer"
+    _inherit = "pos.importer"
     _apply_on = "pos.product.template"
 
     _base_mapper = TemplateMapper
@@ -512,7 +512,7 @@ class ProductTemplateImporter(Component):
         super()._after_import(binding)
         self.import_images(binding)
         self.attribute_line(binding)
-        self.import_combinations()
+        self.import_variants()
         self.deactivate_default_product(binding)
         self.warning_default_category_missing(binding)
 
@@ -538,14 +538,14 @@ class ProductTemplateImporter(Component):
         template = binding.odoo_id
         attribute_values = {}
         option_value_binder = self.binder_for(
-            "pos.product.combination.option.value"
+            "pos.product.variant.option.value"
         )
 
-        pos_key = self.backend_record.get_version_pos_key("product_option_value")
+        # pos_key = self.backend_record.get_version_pos_key("product_option_value")
         option_values = (
             record.get("associations", {})
             .get("product_option_values", {})
-            .get(pos_key, [])
+            # .get(pos_key, [])
         )
         if not isinstance(option_values, list):
             option_values = [option_values]
@@ -579,50 +579,50 @@ class ProductTemplateImporter(Component):
         if remaining_attr_lines:
             remaining_attr_lines.unlink()
 
-    def _import_combination(self, combination, **kwargs):
-        """Import a combination
+    def _import_variant(self, variant, **kwargs):
+        """Import a variant
 
         Can be overriden for instance to forward arguments to the importer
         """
-        # We need to pass the template presta record because we need it
-        # for combination mapper
-        self.work.parent_presta_record = self.pos_record
-        if "parent_presta_record" not in self.work._propagate_kwargs:
-            self.work._propagate_kwargs.append("parent_presta_record")
+        # We need to pass the template pos record because we need it
+        # for variant mapper
+        self.work.parent_pos_record = self.pos_record
+        if "parent_pos_record" not in self.work._propagate_kwargs:
+            self.work._propagate_kwargs.append("parent_pos_record")
         self._import_dependency(
-            combination["id"], "pos.product.combination", always=True, **kwargs
+            variant["id"], "pos.product.variant", always=True, **kwargs
         )
 
-    def _delay_product_image_variant(self, combinations, **kwargs):
-        delayable = self.env["pos.product.combination"].with_delay(
-            priority=15,
-            identity_key=identity_exact,
-        )
-        delayable.set_product_image_variant(self.backend_record, combinations, **kwargs)
+    # def _delay_product_image_variant(self, variants, **kwargs):
+    #     delayable = self.env["pos.product.variant"].with_delay(
+    #         priority=15,
+    #         identity_key=identity_exact,
+    #     )
+    #     delayable.set_product_image_variant(self.backend_record, variants, **kwargs)
 
-    def import_combinations(self):
+    def import_variants(self):
         pos_record = self._get_pos_data()
         associations = pos_record.get("associations", {})
 
-        pos_key = self.backend_record.get_version_pos_key("combinations")
-        combinations = associations.get("combinations", {}).get(pos_key, [])
+        pos_key = self.backend_record.get_version_pos_key("variants")
+        variants = associations.get("variants", {}).get(pos_key, [])
 
-        if not isinstance(combinations, list):
-            combinations = [combinations]
-        if combinations:
-            first_exec = combinations.pop(
-                combinations.index(
-                    {"id": pos_record["id_default_combination"]["value"]}
+        if not isinstance(variants, list):
+            variants = [variants]
+        if variants:
+            first_exec = variants.pop(
+                variants.index(
+                    {"id": pos_record["id_default_variant"]["value"]}
                 )
             )
             if first_exec:
-                self._import_combination(first_exec)
+                self._import_variant(first_exec)
 
-            for combination in combinations:
-                self._import_combination(combination)
+            for variant in variants:
+                self._import_variant(variant)
 
-            if combinations and associations["images"].get("image"):
-                self._delay_product_image_variant([first_exec] + combinations)
+            # if variants and associations["images"].get("image"):
+            #     self._delay_product_image_variant([first_exec] + variants)
 
     def import_images(self, binding):
         pos_record = self._get_pos_data()
@@ -649,11 +649,9 @@ class ProductTemplateImporter(Component):
         self._import_categories()
 
         record = self.pos_record
-        pos_key = self.backend_record.get_version_pos_key("product_option_value")
         option_values = (
-            record.get("associations", {})
-            .get("product_option_values", {})
-            .get(pos_key, [])
+            record.get("product_variants", {})
+            .get("product_variant_ids", [])
         )
 
         if not isinstance(option_values, list):
@@ -661,17 +659,17 @@ class ProductTemplateImporter(Component):
 
         backend_adapter = self.component(
             usage="backend.adapter",
-            model_name="pos.product.combination.option.value",
+            model_name="pos.product.variant.option.value",
         )
 
         for option_value in option_values:
             option_value = backend_adapter.read(option_value["id"])
             self._import_dependency(
                 option_value["id_attribute_group"],
-                "pos.product.combination.option",
+                "pos.product.variant.option",
             )
             self._import_dependency(
-                option_value["id"], "pos.product.combination.option.value"
+                option_value["id"], "pos.product.variant.option.value"
             )
 
     def get_template_model_id(self):
@@ -683,10 +681,11 @@ class ProductTemplateImporter(Component):
 
     def _import_default_category(self):
         record = self.pos_record
-        if int(record["id_category_default"]):
+        print(record)
+        if int(record["category_id"]):
             try:
                 self._import_dependency(
-                    record["id_category_default"], "pos.product.category"
+                    record["category_id"], "pos.product.category"
                 )
             except PosWebServiceError:
                 # an activity will be added in _after_import (because
@@ -695,14 +694,9 @@ class ProductTemplateImporter(Component):
 
     def _import_categories(self):
         record = self.pos_record
-        associations = record.get("associations", {})
-        categories = associations.get("categories", {}).get(
-            self.backend_record.get_version_pos_key("category"), []
-        )
-        if not isinstance(categories, list):
-            categories = [categories]
-        for category in categories:
-            self._import_dependency(category["id"], "pos.product.category")
+        category_id = record.get("category_id")    
+
+        self._import_dependency(category_id, "pos.product.category")
 
 
 class ProductTemplateBatchImporter(Component):

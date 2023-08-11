@@ -404,7 +404,7 @@ class PosBackend(models.Model):
 
         This method updates the stock quantities of products in the POS backend.
         It calls the `export_product_quantities` method of the `pos.product.template`
-        and `pos.product.combination` models with a delay to perform the 
+        and `pos.product.variant` models with a delay to perform the 
         export and update the stock quantities.
 
         :return: True if the update process is initiated successfully.
@@ -414,7 +414,7 @@ class PosBackend(models.Model):
             backend_record.env["pos.product.template"].with_delay().export_product_quantities(
                 backend=backend_record
             )
-            backend_record.env["pos.product.combination"].with_delay().export_product_quantities(
+            backend_record.env["pos.product.variant"].with_delay().export_product_quantities(
                 backend=backend_record
             )
         return True

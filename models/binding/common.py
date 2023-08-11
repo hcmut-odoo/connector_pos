@@ -43,7 +43,7 @@ class PosBinding(models.AbstractModel):
 
     Constraints:
     - `_sql_constraints`: A list of SQL constraints to enforce uniqueness of records 
-    based on the combination of `backend_id` and `pos_id`.
+    based on the variant of `backend_id` and `pos_id`.
 
     Methods:
     - `check_active`: Checks if the associated POS backend is active. 
@@ -211,7 +211,7 @@ class PosBindingOdoo(models.AbstractModel):
 
     Constraints:
     - `_sql_constraints`: A list of SQL constraints to enforce uniqueness of
-    records based on the combination of `backend_id` and `odoo_id`.
+    records based on the variant of `backend_id` and `odoo_id`.
 
     Note: This is an abstract class and should not be instantiated directly.
     """

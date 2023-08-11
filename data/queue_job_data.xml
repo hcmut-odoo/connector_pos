@@ -65,7 +65,7 @@
     >
         <field
             name="model_id"
-            ref="connector_pos.model_pos_product_combination"
+            ref="connector_pos.model_pos_product_variant"
         />
         <field name="method">import_record</field>
         <field name="channel_id" ref="connector_pos.channel_pos_import" />

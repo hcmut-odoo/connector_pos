@@ -22,4 +22,7 @@ class PosModelBinder(Component):
         "pos.product.category",
         "pos.res.partner",
         "pos.address",
+        "pos.product.category",
+        "pos.product.image",
+        "pos.product.template",
     ]
