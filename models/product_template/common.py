@@ -156,7 +156,7 @@ class PosProductTemplate(models.Model):
     def import_products(self, backend, since_date=None, **kwargs):
         if isinstance(since_date, bool):
             since_date = datetime.datetime.now()
-        print(type(since_date))
+        # print(type(since_date))
         now_fmt = datetime.datetime.now()
         
         if since_date:

@@ -227,23 +227,23 @@ class ProductCombinationAdapter(Component):
     _name = "pos.product.variant.adapter"
     _inherit = "pos.adapter"
     _apply_on = "pos.product.variant"
-    _pos_model = "product_variants"
-    _export_node_name = "product_variants"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"
 
 
-# class ProductCombinationOptionAdapter(Component):
-#     _name = "pos.product.variant.option.adapter"
-#     _inherit = "pos.adapter"
-#     _apply_on = "pos.product.variant.option"
+class ProductCombinationOptionAdapter(Component):
+    _name = "pos.product.variant.option.adapter"
+    _inherit = "pos.adapter"
+    _apply_on = "pos.product.variant.option"
 
-#     _pos_model = "product_options"
-#     _export_node_name = "product_options"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"
 
 
-# class ProductCombinationOptionValueAdapter(Component):
-#     _name = "pos.product.variant.option.value.adapter"
-#     _inherit = "pos.adapter"
-#     _apply_on = "pos.product.variant.option.value"
+class ProductCombinationOptionValueAdapter(Component):
+    _name = "pos.product.variant.option.value.adapter"
+    _inherit = "pos.adapter"
+    _apply_on = "pos.product.variant.option.value"
 
-#     _pos_model = "product_option_values"
-#     _export_node_name = "product_option_value"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"

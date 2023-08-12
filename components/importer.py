@@ -182,8 +182,9 @@ class PosImporter(AbstractComponent):
         """
         # Special check on data before import
         self._validate_data(data)
+        print("data", data)
         binding = self.model.with_context(**self._create_context()).create(data)
-        _logger.debug("%d created from POS %s", binding.id, self.pos_id)
+        print("%d created from POS %s", binding.id, self.pos_id)
         return binding
 
     def _update(self, binding, data):
@@ -355,6 +356,7 @@ class PosImporter(AbstractComponent):
 
         map_record = self._map_data()
 
+        print("binding", binding)
         if binding:
             record = self._update_data(map_record)
         else:
@@ -366,6 +368,7 @@ class PosImporter(AbstractComponent):
         if binding:
             self._update(binding, record)
         else:
+            print("fuck_record", record)
             binding = self._create(record)
 
         self.binder.bind(self.pos_id, binding)
