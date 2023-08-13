@@ -19,10 +19,15 @@ class PosModelBinder(Component):
 
     _apply_on = [
         "pos.store",
+        "pos.account.tax",
+        "pos.account.tax.group",
         "pos.product.category",
+        "pos.product.variant",
+        "pos.product.variant.option.value",
         "pos.res.partner",
         "pos.address",
         "pos.product.category",
         "pos.product.image",
         "pos.product.template",
+        "pos.product.variant.option",
     ]

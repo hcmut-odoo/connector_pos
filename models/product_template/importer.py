@@ -110,23 +110,16 @@ class TemplateMapper(Component):
         return {"date_upd": format_date_string(date_upd)}
 
     def has_variants(self, record):
-        associations = record.get("associations", {})
-        variants = associations.get("variants", {})
+        variants = record.get("variants", [])
 
-        return len(variants or "") != 0
+        return len(variants) != 0
 
     def _match_variant_odoo_record(self, record):
         # Browse variants for matching products and find if there
         # is a potential template to be matched
         template = self.env["product.template"]
-        associations = record.get("associations", {})
-        variants = associations.get("variants", {}).get(
-            self.backend_record.get_version_pos_key("variants")
-        )
-        if len(variants) == 1:
-            # Defensive mode when product have no variants, force
-            # the list mode
-            variants = [variants]
+        variants = record.get("variants", [])
+        
         for prod in variants:
             backend_adapter = self.component(
                 usage="backend.adapter",
@@ -253,7 +246,7 @@ class TemplateMapper(Component):
     @mapping
     def description(self, record):
         return {
-            "description": record.get("description", "")
+            "description": record["description"]
         }
 
     @mapping
@@ -272,21 +265,18 @@ class TemplateMapper(Component):
 
     @mapping
     def categ_ids(self, record):
-        categories = (
-            record["associations"]
-            .get("categories", {})
-            .get("category", [])
-        )
+        # print(record)
+        categories = [record.get("category_id")]
         
-        if not isinstance(categories, list):
-            categories = [categories]
+        # if not isinstance(categories, list):
+        #     categories = [categories]
 
         product_categories = self.env["product.category"].browse()
         binder = self.binder_for("pos.product.category")
 
         for pos_category in categories:
             product_categories |= binder.to_internal(
-                pos_category["id"],
+                pos_category,
                 unwrap=True,
             )
 
@@ -321,7 +311,8 @@ class TemplateMapper(Component):
     def barcode(self, record):
         if self.has_variants(record):
             return {}
-        barcode = record.get("barcode") or record.get("ean13")
+        # barcode = record.get("barcode") or record.get("ean13")
+        barcode = str(record.get("id"))
         if barcode in ["", "0"]:
             return {}
         if self.env["barcode.nomenclature"].check_ean(barcode):
@@ -329,9 +320,11 @@ class TemplateMapper(Component):
         return {}
 
     def _get_tax_ids(self, record):
+        # print('_get_tax_ids', record)
         binder = self.binder_for("pos.account.tax.group")
         tax_group = binder.to_internal(
-            record["id_tax_rules_group"],
+            # record["id_tax_rules_group"],
+            1,
             unwrap=True,
         )
         tax_ids = tax_group.tax_ids
@@ -372,36 +365,40 @@ class ImportInventory(models.TransientModel):
 
 class ProductInventoryBatchImporter(Component):
     _name = "pos._import_stock_available.batch.importer"
-    _inherit = "pos.delayed.batch.importer"
+    _inherit = ["pos.delayed.batch.importer", "pos.adapter"]
     _apply_on = "_import_stock_available"
 
     def run(self, filters=None, **kwargs):
         if filters is None:
             filters = {}
 
-        filters["display"] = "[id,id_product,id_product_attribute]"
+        print("precheck_filter", filters)
+        filters = {'action': 'list'}
         _super = super()
 
         return _super.run(filters, **kwargs)
 
     def _run_page(self, filters, **kwargs):
-        records = self.backend_adapter.get(filters)
-        for record in records["stock_availables"]["stock_available"]:
+        print('filters', filters)
+        records = self.client.search("product_variant", filters)
+        for variant_id in records:
+            variant_record = self.client.get("product_variant", variant_id, {'action': 'find'})
+        # for record in records["stock_availables"]["stock_available"]:
             # if product has variants then do not import product stock
             # since variant stocks will be imported
-            if record["id_product_attribute"] == "0":
-                variant_stock_ids = self.backend_adapter.search(
-                    {
-                        "filter[id_product]": record["id_product"],
-                        "filter[id_product_attribute]": ">[0]",
-                    }
-                )
-                if variant_stock_ids:
-                    continue
+            # if record["id_product_attribute"] == "0":
+            #     variant_stock_ids = self.backend_adapter.search(
+            #         {
+            #             "filter[id_product]": record["id_product"],
+            #             "filter[id_product_attribute]": ">[0]",
+            #         }
+            #     )
+            #     if variant_stock_ids:
+            #         continue
 
-            self._import_record(record["id"], record=record, **kwargs)
-        return records["stock_availables"]["stock_available"]
-
+            self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
+        return records
+    
     def _import_record(self, record_id, record=None, **kwargs):
         """Delay the import of the records"""
         assert record
@@ -412,43 +409,34 @@ class ProductInventoryBatchImporter(Component):
 
 class ProductInventoryImporter(Component):
     _name = "pos._import_stock_available.importer"
-    _inherit = "pos.importer"
+    _inherit = ["pos.importer", "pos.adapter"]
     _apply_on = "_import_stock_available"
 
     def _get_quantity(self, record):
-        filters = {
-            "filter[id_product]": record["id_product"],
-            "filter[id_product_attribute]": record["id_product_attribute"],
-            "display": "[quantity]",
-        }
-        quantities = self.backend_adapter.get(filters)
-        all_qty = 0
-        quantities = quantities["stock_availables"]["stock_available"]
+        filters = {'action': 'find'}
+        variant = self.client.get("product_variant", record["id"], filters).get("data")
 
-        if isinstance(quantities, dict):
-            quantities = [quantities]
-        for quantity in quantities:
-            all_qty += int(quantity["quantity"])
-
-        return all_qty
+        return int(variant["stock_qty"])
 
     def _get_binding(self):
         record = self.pos_record
-        if record["id_product_attribute"] == "0":
-            binder = self.binder_for("pos.product.template")
-            return binder.to_internal(record["id_product"])
+        print("_get_binding", record)
+        # if record["id_product_attribute"] == "0":
+        #     binder = self.binder_for("pos.product.template")
+        #     return binder.to_internal(record["id_product"])
         
+        # binder = self.binder_for("pos.product.template")
         binder = self.binder_for("pos.product.variant")
 
-        return binder.to_internal(record["id_product_attribute"])
+        return binder.to_internal(record["id"])
 
     def _import_dependencies(self):
         """Import the dependencies for the record"""
         record = self.pos_record
-        self._import_dependency(record["id_product"], "pos.product.template")
-        if record["id_product_attribute"] != "0":
+        self._import_dependency(record["product_id"], "pos.product.template")
+        if record["id"]:
             self._import_dependency(
-                record["id_product_attribute"], "pos.product.variant"
+                record["id"], "pos.product.variant"
             )
 
     def run(self, pos_id, record=None, **kwargs):
@@ -467,6 +455,7 @@ class ProductInventoryImporter(Component):
             products = binding.odoo_id
 
         for product in products:
+            print("_import_qty", product.id, product.product_tmpl_id.id, qty)
             vals = {
                 "product_id": product.id,
                 "product_tmpl_id": product.product_tmpl_id.id,
@@ -510,11 +499,11 @@ class ProductTemplateImporter(Component):
 
     def _after_import(self, binding):
         super()._after_import(binding)
-        self.import_images(binding)
+        # self.import_images(binding)
         self.attribute_line(binding)
         self.import_variants()
-        self.deactivate_default_product(binding)
-        self.warning_default_category_missing(binding)
+        # self.deactivate_default_product(binding)
+        # self.warning_default_category_missing(binding)
 
     def warning_default_category_missing(self, binding):
         if self.default_category_error:
@@ -542,11 +531,9 @@ class ProductTemplateImporter(Component):
         )
 
         # pos_key = self.backend_record.get_version_pos_key("product_option_value")
-        option_values = (
-            record.get("associations", {})
-            .get("product_option_values", {})
-            # .get(pos_key, [])
-        )
+        print("attribute_line", record)
+        option_values = record.get("variants", [])
+        
         if not isinstance(option_values, list):
             option_values = [option_values]
 
@@ -557,6 +544,12 @@ class ProductTemplateImporter(Component):
             if attr_id not in attribute_values:
                 attribute_values[attr_id] = []
             attribute_values[attr_id].append(value_id)
+            print('option_value', option_value)
+            print('value', value)
+            print('attr_id', attr_id)
+            print('value_id', value_id)
+        
+        print('attribute_values', attribute_values)
 
         remaining_attr_lines = template.with_context(
             active_test=False
@@ -589,6 +582,7 @@ class ProductTemplateImporter(Component):
         self.work.parent_pos_record = self.pos_record
         if "parent_pos_record" not in self.work._propagate_kwargs:
             self.work._propagate_kwargs.append("parent_pos_record")
+        print("_import_dependency", variant["id"])
         self._import_dependency(
             variant["id"], "pos.product.variant", always=True, **kwargs
         )
@@ -602,34 +596,18 @@ class ProductTemplateImporter(Component):
 
     def import_variants(self):
         pos_record = self._get_pos_data()
-        associations = pos_record.get("associations", {})
-
-        pos_key = self.backend_record.get_version_pos_key("variants")
-        variants = associations.get("variants", {}).get(pos_key, [])
+        variants = pos_record.get("variants", [])
 
         if not isinstance(variants, list):
             variants = [variants]
         if variants:
-            first_exec = variants.pop(
-                variants.index(
-                    {"id": pos_record["id_default_variant"]["value"]}
-                )
-            )
-            if first_exec:
-                self._import_variant(first_exec)
-
             for variant in variants:
                 self._import_variant(variant)
-
-            # if variants and associations["images"].get("image"):
-            #     self._delay_product_image_variant([first_exec] + variants)
 
     def import_images(self, binding):
         pos_record = self._get_pos_data()
         associations = pos_record.get("associations", {})
-        images = associations.get("images", {}).get(
-            self.backend_record.get_version_pos_key("image"), {}
-        )
+        images = associations.get("images", {})
         
         if not isinstance(images, list):
             images = [images]
@@ -650,8 +628,7 @@ class ProductTemplateImporter(Component):
 
         record = self.pos_record
         option_values = (
-            record.get("product_variants", {})
-            .get("product_variant_ids", [])
+            record.get("variants", [])
         )
 
         if not isinstance(option_values, list):
@@ -663,9 +640,9 @@ class ProductTemplateImporter(Component):
         )
 
         for option_value in option_values:
-            option_value = backend_adapter.read(option_value["id"])
+            option_value = backend_adapter.read(option_value["id"], {'action': 'find'})
             self._import_dependency(
-                option_value["id_attribute_group"],
+                option_value["id"],
                 "pos.product.variant.option",
             )
             self._import_dependency(
@@ -681,7 +658,7 @@ class ProductTemplateImporter(Component):
 
     def _import_default_category(self):
         record = self.pos_record
-        print(record)
+        # print(record)
         if int(record["category_id"]):
             try:
                 self._import_dependency(

@@ -5,3 +5,8 @@ pos_res_partner,pos_res_partner,model_pos_res_partner,base.group_user,1,1,1,1
 pos_address,pos_address,model_pos_address,base.group_user,1,1,1,1
 pos_product_category,pos_product_category,model_pos_product_category,base.group_user,1,1,1,1
 pos_product_template,pos_product_template,model_pos_product_template,base.group_user,1,1,1,1
+pos_account_tax_group,pos_account_tax_group,model_pos_account_tax_group,base.group_user,1,1,1,1
+pos_product_variant_option_value,pos_product_variant_option_value,model_pos_product_variant_option_value,base.group_user,1,1,1,1
+pos_product_variant,pos_product_variant,model_pos_product_variant,base.group_user,1,1,1,1
+pos_product_image,pos_product_image,model_pos_product_image,base.group_user,1,1,1,1
+pos_product_variant_option,pos_product_variant_option,model_pos_product_variant_option,base.group_user,1,1,1,1
