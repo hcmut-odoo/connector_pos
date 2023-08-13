@@ -18,6 +18,9 @@ from ...utils.datetime import (
     format_date_string,
     parse_date_string
 )
+from ...utils.image import (
+    _import_image_by_url
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -247,6 +250,14 @@ class TemplateMapper(Component):
     def description(self, record):
         return {
             "description": record["description"]
+        }
+    
+    @mapping
+    def image_1920(self, record):
+        image_base_64 = _import_image_by_url(record["image_url"])
+        
+        return {
+            "image_1920": image_base_64.decode()
         }
 
     @mapping
@@ -570,8 +581,6 @@ class ProductTemplateImporter(Component):
 
     def import_images(self, binding):
         pos_record = self._get_pos_data()
-        associations = pos_record.get("associations", {})
-        images = associations.get("images", {})
         
         if not isinstance(images, list):
             images = [images]
