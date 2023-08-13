@@ -29,5 +29,5 @@ class PosModelBinder(Component):
         "pos.product.category",
         "pos.product.image",
         "pos.product.template",
-        "pos.product.variant.option"
+        "pos.product.variant.option",
     ]

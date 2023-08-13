@@ -204,7 +204,7 @@ class ProductInventoryAdapter(Component):
     _inherit = "pos.adapter"
     _apply_on = "_import_stock_available"
     _pos_model = "product_variant"
-    _export_node_name = "stock_available"
+    _export_node_name = "product_variant"
 
     def get(self, options=None):
         return self.client.get(self._pos_model, options=options)

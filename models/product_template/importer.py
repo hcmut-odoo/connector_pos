@@ -246,7 +246,7 @@ class TemplateMapper(Component):
     @mapping
     def description(self, record):
         return {
-            "description": record.get("description", "")
+            "description": record["description"]
         }
 
     @mapping
@@ -365,36 +365,40 @@ class ImportInventory(models.TransientModel):
 
 class ProductInventoryBatchImporter(Component):
     _name = "pos._import_stock_available.batch.importer"
-    _inherit = "pos.delayed.batch.importer"
+    _inherit = ["pos.delayed.batch.importer", "pos.adapter"]
     _apply_on = "_import_stock_available"
 
     def run(self, filters=None, **kwargs):
         if filters is None:
             filters = {}
 
-        filters["display"] = "[id,id_product,id_product_attribute]"
+        print("precheck_filter", filters)
+        filters = {'action': 'list'}
         _super = super()
 
         return _super.run(filters, **kwargs)
 
     def _run_page(self, filters, **kwargs):
-        records = self.backend_adapter.get(filters)
-        for record in records["stock_availables"]["stock_available"]:
+        print('filters', filters)
+        records = self.client.search("product_variant", filters)
+        for variant_id in records:
+            variant_record = self.client.get("product_variant", variant_id, {'action': 'find'})
+        # for record in records["stock_availables"]["stock_available"]:
             # if product has variants then do not import product stock
             # since variant stocks will be imported
-            if record["id_product_attribute"] == "0":
-                variant_stock_ids = self.backend_adapter.search(
-                    {
-                        "filter[id_product]": record["id_product"],
-                        "filter[id_product_attribute]": ">[0]",
-                    }
-                )
-                if variant_stock_ids:
-                    continue
+            # if record["id_product_attribute"] == "0":
+            #     variant_stock_ids = self.backend_adapter.search(
+            #         {
+            #             "filter[id_product]": record["id_product"],
+            #             "filter[id_product_attribute]": ">[0]",
+            #         }
+            #     )
+            #     if variant_stock_ids:
+            #         continue
 
-            self._import_record(record["id"], record=record, **kwargs)
-        return records["stock_availables"]["stock_available"]
-
+            self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
+        return records
+    
     def _import_record(self, record_id, record=None, **kwargs):
         """Delay the import of the records"""
         assert record
@@ -405,43 +409,34 @@ class ProductInventoryBatchImporter(Component):
 
 class ProductInventoryImporter(Component):
     _name = "pos._import_stock_available.importer"
-    _inherit = "pos.importer"
+    _inherit = ["pos.importer", "pos.adapter"]
     _apply_on = "_import_stock_available"
 
     def _get_quantity(self, record):
-        filters = {
-            "filter[id_product]": record["id_product"],
-            "filter[id_product_attribute]": record["id_product_attribute"],
-            "display": "[quantity]",
-        }
-        quantities = self.backend_adapter.get(filters)
-        all_qty = 0
-        quantities = quantities["stock_availables"]["stock_available"]
+        filters = {'action': 'find'}
+        variant = self.client.get("product_variant", record["id"], filters).get("data")
 
-        if isinstance(quantities, dict):
-            quantities = [quantities]
-        for quantity in quantities:
-            all_qty += int(quantity["quantity"])
-
-        return all_qty
+        return int(variant["stock_qty"])
 
     def _get_binding(self):
         record = self.pos_record
-        if record["id_product_attribute"] == "0":
-            binder = self.binder_for("pos.product.template")
-            return binder.to_internal(record["id_product"])
+        print("_get_binding", record)
+        # if record["id_product_attribute"] == "0":
+        #     binder = self.binder_for("pos.product.template")
+        #     return binder.to_internal(record["id_product"])
         
+        # binder = self.binder_for("pos.product.template")
         binder = self.binder_for("pos.product.variant")
 
-        return binder.to_internal(record["id_product_attribute"])
+        return binder.to_internal(record["id"])
 
     def _import_dependencies(self):
         """Import the dependencies for the record"""
         record = self.pos_record
-        self._import_dependency(record["id_product"], "pos.product.template")
-        if record["id_product_attribute"] != "0":
+        self._import_dependency(record["product_id"], "pos.product.template")
+        if record["id"]:
             self._import_dependency(
-                record["id_product_attribute"], "pos.product.variant"
+                record["id"], "pos.product.variant"
             )
 
     def run(self, pos_id, record=None, **kwargs):
@@ -460,6 +455,7 @@ class ProductInventoryImporter(Component):
             products = binding.odoo_id
 
         for product in products:
+            print("_import_qty", product.id, product.product_tmpl_id.id, qty)
             vals = {
                 "product_id": product.id,
                 "product_tmpl_id": product.product_tmpl_id.id,
