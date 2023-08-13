@@ -276,20 +276,6 @@ class PosBackend(models.Model):
         :return: True if the base data synchronization is successful.
         :rtype: bool
         """
-        # Haven't been implemented yet
-        # for backend in self:
-        #     for model_name in [
-        #         # "pos.res.country",
-        #         # "pos.res.currency",
-        #         # "pos.account.tax",
-        #     ]:
-        #         with backend.work_on(model_name) as work:
-        #             importer = work.component(usage="auto.matching.importer")
-        #             importer.run()
-
-        #     self.env["pos.account.tax.group"].import_batch(backend)
-        #     self.env["pos.sale.order.state"].import_batch(backend)
-        print("doing synchonize ....")
         return True
 
     def _check_connection(self):
@@ -404,7 +390,7 @@ class PosBackend(models.Model):
 
         This method updates the stock quantities of products in the POS backend.
         It calls the `export_product_quantities` method of the `pos.product.template`
-        and `pos.product.combination` models with a delay to perform the 
+        and `pos.product.variant` models with a delay to perform the 
         export and update the stock quantities.
 
         :return: True if the update process is initiated successfully.
@@ -414,7 +400,7 @@ class PosBackend(models.Model):
             backend_record.env["pos.product.template"].with_delay().export_product_quantities(
                 backend=backend_record
             )
-            backend_record.env["pos.product.combination"].with_delay().export_product_quantities(
+            backend_record.env["pos.product.variant"].with_delay().export_product_quantities(
                 backend=backend_record
             )
         return True

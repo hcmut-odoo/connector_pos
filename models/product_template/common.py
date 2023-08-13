@@ -3,7 +3,9 @@
 import logging
 from collections import defaultdict
 
-from prestapyt import PosWebServiceDict
+import datetime
+
+from ....pospyt.pospyt import PosWebServiceDict
 
 from odoo import api, fields, models
 
@@ -45,7 +47,7 @@ class ProductTemplate(models.Model):
             template.mapped("pos_bind_ids").recompute_pos_qty()
             # Recompute variant Pos qty
             template.mapped(
-                "product_variant_ids.pos_combinations_bind_ids"
+                "product_variant_ids.pos_variants_bind_ids"
             ).recompute_pos_qty()
         return True
 
@@ -123,8 +125,8 @@ class PosProductTemplate(models.Model):
         default=True,
     )
     show_price = fields.Boolean(string="Display Price", default=True)
-    combinations_ids = fields.One2many(
-        comodel_name="pos.product.combination",
+    variants_ids = fields.One2many(
+        comodel_name="pos.product.variant",
         inverse_name="main_template_id",
         string="Combinations",
     )
@@ -152,17 +154,18 @@ class PosProductTemplate(models.Model):
     )
 
     def import_products(self, backend, since_date=None, **kwargs):
-        filters = None
-        if since_date:
-            filters = {"date": "1", "filter[date_upd]": ">[%s]" % (since_date)}
-        now_fmt = fields.Datetime.now()
+        now_fmt = datetime.datetime.now()
+        
+        if not isinstance(since_date, datetime.datetime):
+            since_date = now_fmt
 
-        self.env["pos.product.category"].import_batch(
-            backend, filters=filters, priority=10
-        )
+        if since_date:
+            date = {'end': since_date}
+        else:
+            date = {'end': now_fmt}
 
         self.env["pos.product.template"].import_batch(
-            backend, filters=filters, priority=15
+            backend, filters={'action': 'list', 'date': date}, priority=15, **kwargs
         )
 
         backend.import_products_since = now_fmt
@@ -188,7 +191,7 @@ class TemplateAdapter(Component):
     _name = "pos.product.template.adapter"
     _inherit = "pos.adapter"
     _apply_on = "pos.product.template"
-    _pos_model = "products"
+    _pos_model = "product"
     _export_node_name = "product"
 
 
@@ -196,8 +199,8 @@ class ProductInventoryAdapter(Component):
     _name = "_import_stock_available.adapter"
     _inherit = "pos.adapter"
     _apply_on = "_import_stock_available"
-    _pos_model = "stock_availables"
-    _export_node_name = "stock_available"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"
 
     def get(self, options=None):
         return self.client.get(self._pos_model, options=options)
@@ -226,7 +229,7 @@ class ProductInventoryAdapter(Component):
 class PosProductQuantityListener(Component):
     _name = "pos.product.quantity.listener"
     _inherit = "base.connector.listener"
-    _apply_on = ["pos.product.combination", "pos.product.template"]
+    _apply_on = ["pos.product.variant", "pos.product.template"]
 
     def _get_inventory_fields(self):
         # fields which should not trigger an export of the products

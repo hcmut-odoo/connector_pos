@@ -16,7 +16,7 @@ Check your taxes and fiscal positions configuration and correct them if necessar
         <field name="model">sale.order</field>
         <field
             name="code"
-        >if self.prestashop_bind_ids and abs(self.amount_total - self.prestashop_bind_ids[0].total_amount) >= 0.001:
+        >if self.pos_bind_ids and abs(self.amount_total - self.pos_bind_ids[0].total_amount) >= 0.001:
     failed = True</field>
         <field name="active" eval="True" />
     </record>
@@ -37,8 +37,8 @@ Check your taxes and fiscal positions configuration and correct them if necessar
         <field
             name="code"
         ># By default, a cent of difference for the tax amount is allowed, feel free to customise it in your own module
-if self.prestashop_bind_ids:
-    ps_amount = self.prestashop_bind_ids[0].total_amount_tax
+if self.pos_bind_ids:
+    ps_amount = self.pos_bind_ids[0].total_amount_tax
     oerp_amount = self.amount_tax
     if (ps_amount == 0.0 and oerp_amount != 0.0) or (ps_amount and abs(1 - oerp_amount / ps_amount) > 0.02):
         failed = True</field>

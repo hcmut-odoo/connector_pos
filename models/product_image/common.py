@@ -7,7 +7,7 @@ from odoo.tools import config
 
 from odoo.addons.component.core import Component
 
-from ...components.backend_adapter import PrestaShopWebServiceImage
+# from ...components.backend_adapter import os
 
 
 class ProductImage(models.Model):
@@ -16,7 +16,7 @@ class ProductImage(models.Model):
     pos_bind_ids = fields.One2many(
         comodel_name="pos.product.image",
         inverse_name="odoo_id",
-        string="PrestaShop Bindings",
+        string="Pos Bindings",
     )
 
 
@@ -40,23 +40,23 @@ class PosProductImage(models.Model):
             return importer.run(product_tmpl_id, image_id)
 
 
-class ProductImageAdapter(Component):
-    _name = "pos.product.image.adapter"
-    _inherit = "pos.crud.adapter"
-    _apply_on = "pos.product.image"
-    _pos_image_model = "products"
-    _pos_model = "products"
+# class ProductImageAdapter(Component):
+#     _name = "pos.product.image.adapter"
+#     _inherit = "pos.crud.adapter"
+#     _apply_on = "pos.product.image"
+#     _pos_image_model = "products"
+#     _pos_model = "products"
 
-    def connect(self):
-        debug = False
-        if config["log_level"] == "debug":
-            debug = True
-        return PrestaShopWebServiceImage(
-            self.pos.api_url, self.pos.webservice_key, debug=debug
-        )
+#     def connect(self):
+#         debug = False
+#         if config["log_level"] == "debug":
+#             debug = True
+#         # return os(
+#         #     self.pos.api_url, self.pos.webservice_key, debug=debug
+#         # )
 
-    def read(self, product_tmpl_id, image_id, options=None):
-        api = self.connect()
-        return api.get_image(
-            self._pos_image_model, product_tmpl_id, image_id, options=options
-        )
+#     def read(self, product_tmpl_id, image_id, options=None):
+#         api = self.connect()
+#         return api.get_image(
+#             self._pos_image_model, product_tmpl_id, image_id, options=options
+#         )

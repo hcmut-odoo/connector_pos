@@ -39,12 +39,6 @@ class PartnerImportMapper(Component):
             return {"is_company": True}
         return {"is_company": False}
 
-    # @mapping
-    # def birthday(self, record):
-    #     if record["birthday"] in ["0000-00-00", ""]:
-    #         return {}
-    #     return {"birthday": record["birthday"]}
-
     @mapping
     def name(self, record):
         if record["name"] is None:
@@ -94,8 +88,6 @@ class PartnerImportMapper(Component):
         if record["phone_number"] is None:
             return {"phone": ""}
         return {"phone": record["phone_number"]}
-    
-    
 
 
 class ResPartnerImporter(Component):
@@ -107,14 +99,6 @@ class ResPartnerImporter(Component):
         pass
 
     def _after_import(self, binding):
-        # super()._after_import(binding)
-        # binder = self.binder_for()
-        # ps_id = binder.to_external(binding)
-        # print('ps_id', ps_id)
-        # self.env["pos.address"].with_delay(priority=10).import_record(
-        #     backend=self.backend_record,
-        #     pos_id = ps_id
-        # )
         pass
 
 
@@ -145,18 +129,7 @@ class AddressImportMapper(Component):
     _apply_on = "pos.address"
 
     direct = [
-        ("address", "street"),
-        # ("address2", "street2"),
-        # ("city", "city"),
-        # ("other", "comment"),
-        # ("phone", "phone"),
-        # ("phone_mobile", "mobile"),
-        # ("postcode", "zip"),
-        # ("date_add", "date_add"),
-        # ("date_upd", "date_upd"),
-        # ("alias", "alias"),
-        # ("company", "company"),
-        # (external_to_m2o("id_customer"), "prestashop_partner_id"),
+        ("address", "street")
     ]
 
     @mapping
@@ -193,12 +166,6 @@ class AddressImportMapper(Component):
 
         return {"date_upd": format_date_string(date_upd)}
     
-    # @mapping
-    # def address1(self, record):
-    #     if record["address"] is None:
-    #         return {"addre": ""}
-    #     return {"address1": record["address"]}
-    
     @mapping
     def phone(self, record):
         if record["phone_number"] is None:
@@ -208,37 +175,6 @@ class AddressImportMapper(Component):
     @mapping
     def backend_id(self, record):
         return {"backend_id": self.backend_record.id}
-
-    # @mapping
-    # def parent_id(self, record):
-    #     binder = self.binder_for("pos.res.partner")
-    #     parent = binder.to_internal(record["id_customer"], unwrap=True)
-    #     return {"parent_id": parent.id}
-
-    # @mapping
-    # def name(self, record):
-    #     parts = [record["name"]]
-    #     name = " ".join(p.strip() for p in parts if p.strip())
-    #     return {"name": name}
-
-    # @mapping
-    # def country(self, record):
-    #     if record.get("id_country"):
-    #         binder = self.binder_for("pos.res.country")
-    #         country = binder.to_internal(record["id_country"], unwrap=True)
-    #         return {"country_id": country.id}
-    #     return {}
-
-    # @mapping
-    # def company_id(self, record):
-    #     return {"company_id": self.backend_record.company_id.id}
-
-    # @only_create
-    # @mapping
-    # def type(self, record):
-    #     # do not set 'contact', otherwise the address fields are shared with
-    #     # the parent
-    #     return {"type": record.get("address_type", "other")}
 
 
 class AddressImporter(Component):

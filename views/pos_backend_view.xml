@@ -127,6 +127,26 @@
                                 />
                             </group>
                             <group>
+                                <div>
+                                    <label
+                                        string="Import product categories and products"
+                                        class="oe_inline"
+                                        for="import_products_since"
+                                    />
+                                    <field
+                                        name="import_products_since"
+                                        class="oe_inline"
+                                        nolabel="1"
+                                    />
+                                </div>
+                                <button
+                                    name="import_products"
+                                    type="object"
+                                    class="oe_highlight"
+                                    string="Import in background"
+                                />
+                            </group>
+                            <group>
                                 <span>Import stock quantities</span>
                                 <button
                                     name="import_stock_qty"

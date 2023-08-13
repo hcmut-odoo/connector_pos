@@ -9,25 +9,25 @@ from odoo.addons.connector.components.mapper import mapping, only_create
 
 _logger = logging.getLogger(__name__)
 try:
-    from prestapyt import PrestaShopWebServiceError
+    from ....pospyt.pospyt import PosWebServiceError
 except ImportError:
-    _logger.debug("Cannot import from `prestapyt`")
+    _logger.debug("Cannot import from `pospyt`")
 
 
 class ProductCombinationImporter(Component):
-    _name = "prestashop.product.combination.importer"
-    _inherit = "prestashop.importer"
-    _apply_on = "prestashop.product.combination"
+    _name = "pos.product.variant.importer"
+    _inherit = "pos.importer"
+    _apply_on = "pos.product.variant"
 
-    def template_attribute_lines(self, option_values):
-        record = self.prestashop_record
-        template_binder = self.binder_for("prestashop.product.template")
-        template = template_binder.to_internal(record["id_product"]).odoo_id
+    def template_attribute_lines(self, option_values): # Not run
+        record = self.pos_record
+        template_binder = self.binder_for("pos.product.template")
+        template = template_binder.to_internal(record["product_id"]).odoo_id
         attribute_values = {}
         option_value_binder = self.binder_for(
-            "prestashop.product.combination.option.value"
+            "pos.product.variant.option.value"
         )
-        option_binder = self.binder_for("prestashop.product.combination.option")
+        option_binder = self.binder_for("pos.product.variant.option")
         for option_value in option_values:
             attr_id = option_binder.to_internal(
                 option_value["id_attribute_group"]
@@ -54,55 +54,55 @@ class ProductCombinationImporter(Component):
 
     def _after_import(self, binding):
         super()._after_import(binding)
-        self.import_supplierinfo(binding)
+        # self.import_supplierinfo(binding)
 
-    def set_variant_images(self, combinations):
-        backend_adapter = self.component(
-            usage="backend.adapter", model_name="prestashop.product.combination"
-        )
-        for combination in combinations:
-            record = backend_adapter.read(combination["id"])
-            associations = record.get("associations", {})
-            try:
-                pos_images = associations.get("images", {}).get(
-                    self.backend_record.get_version_pos_key("image"), {}
-                )
-            except PrestaShopWebServiceError:
-                # TODO: don't we track anything here? Maybe a checkpoint?
-                continue
-            binder = self.binder_for("prestashop.product.image")
-            if not isinstance(pos_images, list):
-                pos_images = [pos_images]
-            if "id" in pos_images[0]:
-                images = [
-                    binder.to_internal(x.get("id"), unwrap=True) for x in pos_images
-                ]
-            else:
-                continue
-            product_binder = self.binder_for("prestashop.product.combination")
-            product = product_binder.to_internal(combination["id"], unwrap=True)
-            product.with_context(connector_no_export=True).write(
-                {"image_ids": [(6, 0, [x.id for x in images])]}
-            )
+    # def set_variant_images(self, variants):
+    #     backend_adapter = self.component(
+    #         usage="backend.adapter", model_name="pos.product.variant"
+    #     )
+    #     for variant in variants:
+    #         record = backend_adapter.read(variant["id"])
+    #         associations = record.get("associations", {})
+    #         try:
+    #             pos_images = associations.get("images", {}).get(
+    #                 self.backend_record.get_version_pos_key("image"), {}
+    #             )
+    #         except PosWebServiceError:
+    #             # TODO: don't we track anything here? Maybe a checkpoint?
+    #             continue
+    #         binder = self.binder_for("pos.product.image")
+    #         if not isinstance(pos_images, list):
+    #             pos_images = [pos_images]
+    #         if "id" in pos_images[0]:
+    #             images = [
+    #                 binder.to_internal(x.get("id"), unwrap=True) for x in pos_images
+    #             ]
+    #         else:
+    #             continue
+    #         product_binder = self.binder_for("pos.product.variant")
+    #         product = product_binder.to_internal(variant["id"], unwrap=True)
+    #         product.with_context(connector_no_export=True).write(
+    #             {"image_ids": [(6, 0, [x.id for x in images])]}
+    #         )
 
     def _import(self, binding, **kwargs):
-        # We need to pass the template presta record because we need it
-        # for combination mapper
-        if not hasattr(self.work, "parent_presta_record"):
+        # We need to pass the template pos record because we need it
+        # for variant mapper
+        if not hasattr(self.work, "parent_pos_record"):
             tmpl_adapter = self.component(
-                usage="backend.adapter", model_name="prestashop.product.template"
+                usage="backend.adapter", model_name="pos.product.template"
             )
-            tmpl_record = tmpl_adapter.read(self.prestashop_record.get("id_product"))
-            self.work.parent_presta_record = tmpl_record
-            if "parent_presta_record" not in self.work._propagate_kwargs:
-                self.work._propagate_kwargs.append("parent_presta_record")
+            tmpl_record = tmpl_adapter.read(self.pos_record.get("product_id"))
+            self.work.parent_pos_record = tmpl_record
+            if "parent_pos_record" not in self.work._propagate_kwargs:
+                self.work._propagate_kwargs.append("parent_pos_record")
         return super()._import(binding, **kwargs)
 
 
 class ProductCombinationMapper(Component):
-    _name = "prestashop.product.combination.mapper"
-    _inherit = "prestashop.import.mapper"
-    _apply_on = "prestashop.product.combination"
+    _name = "pos.product.variant.mapper"
+    _inherit = "pos.import.mapper"
+    _apply_on = "pos.product.variant"
 
     direct = []
 
@@ -110,27 +110,27 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def weight(self, record):
-        prestashop_product_tmpl_obj = self.env["prestashop.product.template"]
-        combination_weight = float(record.get("weight", "0.0"))
-        if not hasattr(self.work, "parent_presta_record"):
-            presta_product_tmpl = prestashop_product_tmpl_obj.search(
-                [("prestashop_id", "=", record["id_product"])]
+        pos_product_tmpl_obj = self.env["pos.product.template"]
+        variant_weight = float(record.get("weight", "0.0"))
+        if not hasattr(self.work, "parent_pos_record"):
+            pos_product_tmpl = pos_product_tmpl_obj.search(
+                [("pos_id", "=", record["product_id"])]
             )
-            main_weight = presta_product_tmpl.weight
+            main_weight = pos_product_tmpl.weight
         else:
-            main_weight = float(self.work.parent_presta_record.get("weight", 0.0))
-        weight = main_weight + combination_weight
+            main_weight = float(self.work.parent_pos_record.get("weight", 0.0))
+        weight = main_weight + variant_weight
         return {"weight": weight}
 
     @mapping
-    def combination_default(self, record):
-        return {"default_on": bool(int(record["default_on"] or 0))}
+    def variant_default(self, record):
+        return {"default_on": bool(int(record["id"] or 0))}
 
     @only_create
     @mapping
     def product_tmpl_id(self, record):
         template = self.get_main_template_binding(record)
-        product_binder = self.binder_for("prestashop.product.combination")
+        product_binder = self.binder_for("pos.product.variant")
         product = product_binder.to_internal(record["id"])
         if not product or product.product_tmpl_id.id != template.odoo_id.id:
             return {"product_tmpl_id": template.odoo_id.id}
@@ -152,18 +152,16 @@ class ProductCombinationMapper(Component):
                 result[attribute] = [(6, 0, ids)]
             else:
                 result[attribute] = main_template[attribute]
+
         return result
 
     def get_main_template_binding(self, record):
-        template_binder = self.binder_for("prestashop.product.template")
-        return template_binder.to_internal(record["id_product"])
+        template_binder = self.binder_for("pos.product.template")
+
+        return template_binder.to_internal(record["product_id"])
 
     def _get_option_value(self, record):
-        option_values = (
-            record.get("associations", {})
-            .get("product_option_values", {})
-            .get(self.backend_record.get_version_pos_key("product_option_value"), [])
-        )
+        option_values = [{"id": record["id"]}]
         template_binding = self.get_main_template_binding(record)
         template = template_binding.odoo_id
         if type(option_values) is dict:
@@ -171,7 +169,7 @@ class ProductCombinationMapper(Component):
         tmpl_values = template.attribute_line_ids.mapped("product_template_value_ids")
         for option_value in option_values:
             option_value_binder = self.binder_for(
-                "prestashop.product.combination.option.value"
+                "pos.product.variant.option.value"
             )
             option_value_binding = option_value_binder.to_internal(option_value["id"])
             tmpl_value = tmpl_values.filtered(
@@ -186,6 +184,7 @@ class ProductCombinationMapper(Component):
         results = []
         for tmpl_attr_value in self._get_option_value(record):
             results.append(tmpl_attr_value.id)
+            
         return {"product_template_attribute_value_ids": [(6, 0, results)]}
 
     @mapping
@@ -195,7 +194,7 @@ class ProductCombinationMapper(Component):
 
     def _product_code_exists(self, code):
         model = self.env["product.product"]
-        combination_binder = self.binder_for("prestashop.product.combination")
+        variant_binder = self.binder_for("pos.product.variant")
         product = model.with_context(active_test=False).search(
             [
                 ("default_code", "=", code),
@@ -203,13 +202,13 @@ class ProductCombinationMapper(Component):
             ],
             limit=1,
         )
-        return product and not combination_binder.to_external(product, wrap=True)
+        return product and not variant_binder.to_external(product, wrap=True)
 
     @mapping
     def default_code(self, record):
         code = record.get("reference")
         if not code:
-            code = "{}_{}".format(record["id_product"], record["id"])
+            code = "{}_{}".format(record["product_id"], record["id"])
         if (
             not self._product_code_exists(code)
             or self.backend_record.matching_product_ch == "reference"
@@ -224,26 +223,27 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def barcode(self, record):
-        barcode = record.get("barcode") or record.get("ean13")
+        barcode = record.get("barcode") or str(record.get("id"))
         check_ean = self.env["barcode.nomenclature"].check_ean
         if barcode in ["", "0"]:
             backend_adapter = self.component(
-                usage="backend.adapter", model_name="prestashop.product.template"
+                usage="backend.adapter", model_name="pos.product.template"
             )
-            template = backend_adapter.read(record["id_product"])
-            barcode = template.get("barcode") or template.get("ean13")
+            template = backend_adapter.read(record["product_id"])
+            barcode = template.get("barcode") or template.get("id")
         if barcode and barcode != "0" and check_ean(barcode):
             return {"barcode": barcode}
         return {}
 
-    def _get_tax_ids(self, record):
+    def _get_tax_ids(self, record): # Make default id_tax_rules_group
         product_tmpl_adapter = self.component(
-            usage="backend.adapter", model_name="prestashop.product.template"
+            usage="backend.adapter", model_name="pos.product.template"
         )
-        tax_group = product_tmpl_adapter.read(record["id_product"])
-        tax_group = self.binder_for("prestashop.account.tax.group").to_internal(
+        tax_group = {"id_tax_rules_group": 1}
+        tax_group = self.binder_for("pos.account.tax.group").to_internal(
             tax_group["id_tax_rules_group"], unwrap=True
         )
+
         return tax_group.tax_ids
 
     def _apply_taxes(self, tax, price):
@@ -259,15 +259,15 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def specific_price(self, record):
-        product = self.binder_for("prestashop.product.combination").to_internal(
+        product = self.binder_for("pos.product.variant").to_internal(
             record["id"], unwrap=True
         )
-        product_template = self.binder_for("prestashop.product.template").to_internal(
-            record["id_product"]
+        product_template = self.binder_for("pos.product.template").to_internal(
+            record["product_id"]
         )
         tax = product.product_tmpl_id.taxes_id[:1] or self._get_tax_ids(record)
-        impact = float(self._apply_taxes(tax, float(record["price"] or "0.0")))
-        cost_price = float(record["wholesale_price"] or "0.0")
+        impact = float(self._apply_taxes(tax, float(record["extend_price"] or "0.0")))
+        cost_price = float(record["extend_price"] or "0.0")
         return {
             "list_price": product_template.list_price,
             "standard_price": cost_price or product_template.wholesale_price,
@@ -298,22 +298,17 @@ class ProductCombinationMapper(Component):
         template = self.get_main_template_binding(record).odoo_id
         # if variant already exists linked it since we can't have 2 variants with
         # the exact same attributes
+        option_values = [{"id" : record["id"]}]
 
-        pos_key = self.backend_record.get_version_pos_key("product_option_value")
-        option_values = (
-            record.get("associations", {})
-            .get("product_option_values", {})
-            .get(pos_key, [])
-        )
-        if not isinstance(option_values, list):
-            option_values = [option_values]
         option_value_binder = self.binder_for(
-            "prestashop.product.combination.option.value"
+            "pos.product.variant.option.value"
         )
+
         value_ids = [
             option_value_binder.to_internal(option_value["id"]).odoo_id.id
             for option_value in option_values
         ]
+
         for variant in template.product_variant_ids:
             if sorted(
                 variant.product_template_attribute_value_ids.mapped(
@@ -325,22 +320,18 @@ class ProductCombinationMapper(Component):
 
 
 class ProductCombinationOptionImporter(Component):
-    _name = "prestashop.product.combination.option.importer"
-    _inherit = "prestashop.importer"
-    _apply_on = "prestashop.product.combination.option"
+    _name = "pos.product.variant.option.importer"
+    _inherit = "pos.importer"
+    _apply_on = "pos.product.variant.option"
 
     def _import_values(self, attribute_binding):
-        record = self.prestashop_record
-        option_values = (
-            record.get("associations", {})
-            .get("product_option_values", {})
-            .get(self.backend_record.get_version_pos_key("product_option_value"), [])
-        )
+        record = self.pos_record
+        option_values = [{"id": record["id"]}]
         if not isinstance(option_values, list):
             option_values = [option_values]
         for option_value in option_values:
             self._import_dependency(
-                option_value["id"], "prestashop.product.combination.option.value"
+                option_value["id"], "pos.product.variant.option.value"
             )
 
     def _after_import(self, binding):
@@ -349,9 +340,9 @@ class ProductCombinationOptionImporter(Component):
 
 
 class ProductCombinationOptionMapper(Component):
-    _name = "prestashop.product.combination.option.mapper"
-    _inherit = "prestashop.import.mapper"
-    _apply_on = "prestashop.product.combination.option"
+    _name = "pos.product.variant.option.mapper"
+    _inherit = "pos.import.mapper"
+    _apply_on = "pos.product.variant.option"
 
     direct = []
 
@@ -372,33 +363,16 @@ class ProductCombinationOptionMapper(Component):
 
     @mapping
     def name(self, record):
-        name = None
-        if "language" in record["name"]:
-            language_binder = self.binder_for("prestashop.res.lang")
-            languages = record["name"]["language"]
-            if not isinstance(languages, list):
-                languages = [languages]
-            for lang in languages:
-                erp_language = language_binder.to_internal(lang["attrs"]["id"])
-                if not erp_language:
-                    continue
-                if erp_language.code == "en_US":
-                    name = lang["value"]
-                    break
-            if name is None:
-                name = languages[0]["value"]
-        else:
-            name = record["name"]
-        return {"name": name}
+        return {"name": record["size"] + "-" + str(record["product_id"])}
 
     @mapping
     def create_variant(self, record):
         # seems the best way. If we do it in automatic, we could have too much variants
-        # compared to prestashop if we got more thant 1 attributes, which seems
-        # totally possible. If we put no variant, and we delete one value on prestashop
+        # compared to pos if we got more thant 1 attributes, which seems
+        # totally possible. If we put no variant, and we delete one value on pos
         # product won't be inative by odoo
-        # with dynamic, prestashop create it on product import, odoo inactive it if
-        # deleted on prestashop...
+        # with dynamic, pos create it on product import, odoo inactive it if
+        # deleted on pos...
         # We avoid "You cannot change the Variants Creation Mode of the attribute"
         # error by not changing the attribute when there is existing record
         odoo_id = self.odoo_id(record)
@@ -407,43 +381,44 @@ class ProductCombinationOptionMapper(Component):
 
 
 class ProductCombinationOptionValueAdapter(Component):
-    _name = "prestashop.product.combination.option.value.adapter"
-    _inherit = "prestashop.adapter"
-    _apply_on = "prestashop.product.combination.option.value"
+    _name = "pos.product.variant.option.value.adapter"
+    _inherit = "pos.adapter"
+    _apply_on = "pos.product.variant.option.value"
 
-    _prestashop_model = "product_option_values"
-    _export_node_name = "product_option_value"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"
 
 
 class ProductCombinationOptionValueImporter(Component):
-    _name = "prestashop.product.combination.option.value.importer"
-    _inherit = "prestashop.translatable.record.importer"
-    _apply_on = "prestashop.product.combination.option.value"
+    _name = "pos.product.variant.option.value.importer"
+    _inherit = "pos.importer"
+    _apply_on = "pos.product.variant.option.value"
 
     _translatable_fields = {
-        "prestashop.product.combination.option.value": ["name"],
+        "pos.product.variant.option.value": ["name"],
     }
 
 
 class ProductCombinationOptionValueMapper(Component):
-    _name = "prestashop.product.combination.option.value.mapper"
-    _inherit = "prestashop.import.mapper"
-    _apply_on = "prestashop.product.combination.option.value"
+    _name = "pos.product.variant.option.value.mapper"
+    _inherit = "pos.import.mapper"
+    _apply_on = "pos.product.variant.option.value"
 
-    direct = [
-        ("name", "name"),
-    ]
+
+    @mapping
+    def name(self, record):
+        return {"name": record["size"]}
 
     @only_create
     @mapping
     def odoo_id(self, record):
-        attribute_binder = self.binder_for("prestashop.product.combination.option")
+        attribute_binder = self.binder_for("pos.product.variant.option")
         attribute = attribute_binder.to_internal(
-            record["id_attribute_group"], unwrap=True
+            record["id"], unwrap=True
         )
         assert attribute
         binding = self.env["product.attribute.value"].search(
-            [("name", "=", record["name"]), ("attribute_id", "=", attribute.id)],
+            [("name", "=", record["size"]), ("attribute_id", "=", attribute.id)],
             limit=1,
         )
         if binding:
@@ -451,8 +426,9 @@ class ProductCombinationOptionValueMapper(Component):
 
     @mapping
     def attribute_id(self, record):
-        binder = self.binder_for("prestashop.product.combination.option")
-        attribute = binder.to_internal(record["id_attribute_group"], unwrap=True)
+        binder = self.binder_for("pos.product.variant.option")
+        attribute = binder.to_internal(record["id"], unwrap=True)
+        
         return {"attribute_id": attribute.id}
 
     @mapping
@@ -461,6 +437,6 @@ class ProductCombinationOptionValueMapper(Component):
 
 
 class ProductProductBatchImporter(Component):
-    _name = "prestashop.product.combination.batch.importer"
-    _inherit = "prestashop.delayed.batch.importer"
-    _apply_on = "prestashop.product.combination"
+    _name = "pos.product.variant.batch.importer"
+    _inherit = "pos.delayed.batch.importer"
+    _apply_on = "pos.product.variant"
