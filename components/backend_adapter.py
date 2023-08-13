@@ -167,7 +167,6 @@ class GenericAdapter(AbstractComponent):
         print(
             "method search, model %s, filters %s", self._pos_model, str(filters)
         )
-        print("method search, model %s, filters %s", self._pos_model, str(filters))
         return self.client.search(self._pos_model, filters)
 
 
@@ -216,14 +215,14 @@ class GenericAdapter(AbstractComponent):
 
         """
         print(
-            f"method create, model {self._prestashop_model}, attributes {str(attributes)}"
+            f"method create, model {self._pos_model}, attributes {str(attributes)}"
         )
 
         res = self.client.add(
-            self._prestashop_model, {self._export_node_name: attributes}
+            self._pos_model, {self._export_node_name: attributes}
         )
         if self._export_node_name_res:
-            return res["prestashop"][self._export_node_name_res]["id"]
+            return res["pos"][self._export_node_name_res]["id"]
         return res
 
 
@@ -275,7 +274,9 @@ class GenericAdapter(AbstractComponent):
             Exception: If an error occurs during the delete operation.
 
         """
-        print("method delete, model %s, ids %s", resource, str(ids))
+        print(
+            "method delete, model %s, ids %s", resource, str(ids)
+        )
         # Delete a record(s) on the external system
         return self.client.delete(resource, ids)
 

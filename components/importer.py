@@ -79,7 +79,7 @@ class PosImporter(AbstractComponent):
         """
         Return the raw Pos data for `self.pos_id`.
         """
-        print('_get_pos_data', self.pos_id)
+
         return self.backend_adapter.read(self.pos_id, {'action': 'find'})
 
 
@@ -183,7 +183,6 @@ class PosImporter(AbstractComponent):
         # Special check on data before import
         self._validate_data(data)
         binding = self.model.with_context(**self._create_context()).create(data)
-        _logger.debug("%d created from POS %s", binding.id, self.pos_id)
         return binding
 
     def _update(self, binding, data):
@@ -354,7 +353,6 @@ class PosImporter(AbstractComponent):
         """
 
         map_record = self._map_data()
-
         if binding:
             record = self._update_data(map_record)
         else:
@@ -408,7 +406,6 @@ class BatchImporter(AbstractComponent):
         # while len(record_ids) == self.page_size:
         #     page_number += 1
         #     filters["limit"] = "%d,%d" % (page_number * self.page_size, self.page_size)
-        print('run in importer', filters)
         self._run_page(filters, **kwargs)
 
     def _run_page(self, filters, **kwargs):
@@ -421,9 +418,7 @@ class BatchImporter(AbstractComponent):
         :return: The list of record IDs processed in this page.
         :rtype: list
         """
-        print('_run_page')
         record_ids = self.backend_adapter.search(filters)
-        print(record_ids)
         for record_id in record_ids:
             self._import_record(record_id, **kwargs)
 
@@ -467,7 +462,6 @@ class DirectBatchImporter(AbstractComponent):
 
         :param external_id: The external ID of the record to be imported.
         """
-        print("DirectBatchImporter")
         self.env[self.model._name].import_record(
             backend=self.backend_record, pos_id=external_id
         )
@@ -502,7 +496,6 @@ class DelayedBatchImporter(AbstractComponent):
         :param external_id: The external ID of the record to be imported.
         :param kwargs: Additional keyword arguments for configuring the delayed import.
         """
-        print("DelayedBatchImporter")
         priority = kwargs.pop("priority", None)
         eta = kwargs.pop("eta", None)
         max_retries = kwargs.pop("max_retries", None)
