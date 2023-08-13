@@ -19,7 +19,8 @@ from ...utils.datetime import (
     parse_date_string
 )
 from ...utils.image import (
-    _import_image_by_url
+    _import_image_by_url,
+    unescape_url
 )
 
 _logger = logging.getLogger(__name__)
@@ -254,7 +255,10 @@ class TemplateMapper(Component):
     
     @mapping
     def image_1920(self, record):
-        image_base_64 = _import_image_by_url(record["image_url"])
+        escaped_url = record["image_url"]
+        correct_url = unescape_url(escaped_url)
+
+        image_base_64 = _import_image_by_url(correct_url)
         
         return {
             "image_1920": image_base_64.decode()

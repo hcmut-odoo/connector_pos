@@ -3,6 +3,7 @@ import io
 import logging
 import base64
 import requests
+from urllib.parse import unquote
 from odoo.tools import config
 
 FIELDS_RECURSION_LIMIT = 3
@@ -14,7 +15,7 @@ DEFAULT_IMAGE_CHUNK_SIZE = 32768
 
 _logger = logging.getLogger(__name__)
 
-def _import_image_by_url(self, url):
+def _import_image_by_url(url):
         """ Imports an image by URL
         """
         maxsize = int(config.get("import_image_maxbytes", DEFAULT_IMAGE_MAXBYTES))
@@ -46,3 +47,7 @@ def _import_image_by_url(self, url):
                 'url': url,
                 'error': e
             })
+
+def unescape_url(escaped_url):
+    unescaped_url = escaped_url.replace('\\/', '/').replace('\\:', ':')
+    return unescaped_url

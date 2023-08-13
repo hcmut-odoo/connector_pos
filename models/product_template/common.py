@@ -152,6 +152,7 @@ class PosProductTemplate(models.Model):
         ],
         default="both",
     )
+    image_1920 = fields.Binary(string="Image", store=True, attachment=False)
 
     def import_products(self, backend, since_date=None, **kwargs):
         now_fmt = datetime.datetime.now()
