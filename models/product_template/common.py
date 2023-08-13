@@ -154,19 +154,15 @@ class PosProductTemplate(models.Model):
     )
 
     def import_products(self, backend, since_date=None, **kwargs):
-        if isinstance(since_date, bool):
-            since_date = datetime.datetime.now()
-        # print(type(since_date))
         now_fmt = datetime.datetime.now()
         
-        if since_date:
-            date = {'end': datetime.datetime.now()}
-        else:
-            date = {'end': datetime.datetime.now()}
+        if not isinstance(since_date, datetime.datetime):
+            since_date = now_fmt
 
-        # self.env["pos.product.category"].import_batch(
-        #     backend, filters={'action': 'list', 'date': date}, priority=10, **kwargs
-        # )
+        if since_date:
+            date = {'end': since_date}
+        else:
+            date = {'end': now_fmt}
 
         self.env["pos.product.template"].import_batch(
             backend, filters={'action': 'list', 'date': date}, priority=15, **kwargs
