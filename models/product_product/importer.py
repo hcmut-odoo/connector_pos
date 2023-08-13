@@ -56,35 +56,6 @@ class ProductCombinationImporter(Component):
         super()._after_import(binding)
         # self.import_supplierinfo(binding)
 
-    # def set_variant_images(self, variants):
-    #     backend_adapter = self.component(
-    #         usage="backend.adapter", model_name="pos.product.variant"
-    #     )
-    #     for variant in variants:
-    #         record = backend_adapter.read(variant["id"])
-    #         associations = record.get("associations", {})
-    #         try:
-    #             pos_images = associations.get("images", {}).get(
-    #                 self.backend_record.get_version_pos_key("image"), {}
-    #             )
-    #         except PosWebServiceError:
-    #             # TODO: don't we track anything here? Maybe a checkpoint?
-    #             continue
-    #         binder = self.binder_for("pos.product.image")
-    #         if not isinstance(pos_images, list):
-    #             pos_images = [pos_images]
-    #         if "id" in pos_images[0]:
-    #             images = [
-    #                 binder.to_internal(x.get("id"), unwrap=True) for x in pos_images
-    #             ]
-    #         else:
-    #             continue
-    #         product_binder = self.binder_for("pos.product.variant")
-    #         product = product_binder.to_internal(variant["id"], unwrap=True)
-    #         product.with_context(connector_no_export=True).write(
-    #             {"image_ids": [(6, 0, [x.id for x in images])]}
-    #         )
-
     def _import(self, binding, **kwargs):
         # We need to pass the template pos record because we need it
         # for variant mapper

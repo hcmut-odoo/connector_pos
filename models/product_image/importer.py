@@ -62,26 +62,17 @@ class ProductImageImporter(Component):
     def _get_pos_data(self):
         """Return the raw Pos data for ``self.pos_id``"""
         adapter = self.component(usage="backend.adapter", model_name=self.model._name)
-        return adapter.read(self.template_id, self.image_id)
+        return adapter.read(self.template_id, self.image_url)
 
-    def run(self, template_id, image_id, **kwargs):
+    def run(self, template_id, image_url, **kwargs):
         self.template_id = template_id
-        self.image_id = image_id
+        self.image_id = template_id
         binder = self.binder_for("pos.product.template")
         product_tmpl = binder.to_internal(template_id, unwrap=True)
 
-        try:
-            super().run(image_id, **kwargs)
-        except PosWebServiceError:
-            # TODO add activity to warn about he failure
-            if product_tmpl:
-                pass
-        # msg = _("Import of image id `%s` failed. Error: `%s`") % (
-        #     image_id,
-        #     error.msg,
-        # )
-        if str(product_tmpl.default_image_id) != str(image_id):
+        if str(product_tmpl.default_image_id) != str(template_id):
             return
+
         self.binder_for("pos.product.image")
-        image = binder.to_internal(image_id, unwrap=True)
+        image = binder.to_internal(template_id, unwrap=True)
         product_tmpl.image_1920 = image.image_main

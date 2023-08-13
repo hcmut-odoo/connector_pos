@@ -252,17 +252,6 @@ class TemplateMapper(Component):
         return {
             "description": record["description"]
         }
-    
-    @mapping
-    def image_1920(self, record):
-        escaped_url = record["image_url"]
-        correct_url = unescape_url(escaped_url)
-
-        image_base_64 = _import_image_by_url(correct_url)
-        
-        return {
-            "image_1920": image_base_64.decode()
-        }
 
     @mapping
     def active(self, record):
@@ -307,7 +296,7 @@ class TemplateMapper(Component):
 
     @mapping
     def default_image_id(self, record):
-        image_id = record.get("id_default_image", {}).get("value", -1)
+        image_id = record["id"]
         return {"default_image_id": image_id}
 
     @mapping
@@ -585,19 +574,14 @@ class ProductTemplateImporter(Component):
 
     def import_images(self, binding):
         pos_record = self._get_pos_data()
-        
-        if not isinstance(images, list):
-            images = [images]
-
-        for image in images:
-            if image.get("id"):
-                delayable = self.env["pos.product.image"].with_delay(
-                    priority=10,
-                    identity_key=identity_exact,
-                )
-                delayable.import_product_image(
-                    self.backend_record, pos_record["id"], image["id"]
-                )
+    
+        delayable = self.env["pos.product.image"].with_delay(
+            priority=10,
+            identity_key=identity_exact,
+        )
+        delayable.import_product_image(
+            self.backend_record, pos_record["id"], pos_record["image_url"]
+        )
 
     def _import_dependencies(self):
         self._import_default_category()

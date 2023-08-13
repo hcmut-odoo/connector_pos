@@ -22,6 +22,10 @@ from odoo import _, exceptions
 
 from odoo.addons.component.core import AbstractComponent
 from odoo.addons.connector.exception import NetworkRetryableError
+from ..utils.image import (
+    _import_image_by_url,
+    unescape_url
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -312,3 +316,19 @@ class GenericAdapter(AbstractComponent):
         """
         """HEAD"""
         return self.client.connect(self._pos_model)
+
+class PosWebServiceImage(AbstractComponent):
+    def get_image(self, resource, resource_id=None, image_url=None, options=None):
+        full_public_url = unescape_url(image_url)
+
+        unescape_image_url = unescape_url(image_url)
+        image_base_64 = _import_image_by_url(unescape_image_url)
+
+        record = {
+            "content": image_base_64,
+            resource[:-1]: resource_id + "_id",
+            "image_id": resource_id,
+            "full_public_url": full_public_url
+        }
+
+        return record
