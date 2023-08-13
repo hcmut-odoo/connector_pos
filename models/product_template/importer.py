@@ -265,11 +265,7 @@ class TemplateMapper(Component):
 
     @mapping
     def categ_ids(self, record):
-        # print(record)
         categories = [record.get("category_id")]
-        
-        # if not isinstance(categories, list):
-        #     categories = [categories]
 
         product_categories = self.env["product.category"].browse()
         binder = self.binder_for("pos.product.category")
@@ -311,7 +307,6 @@ class TemplateMapper(Component):
     def barcode(self, record):
         if self.has_variants(record):
             return {}
-        # barcode = record.get("barcode") or record.get("ean13")
         barcode = str(record.get("id"))
         if barcode in ["", "0"]:
             return {}
@@ -320,11 +315,9 @@ class TemplateMapper(Component):
         return {}
 
     def _get_tax_ids(self, record):
-        # print('_get_tax_ids', record)
         binder = self.binder_for("pos.account.tax.group")
         tax_group = binder.to_internal(
-            # record["id_tax_rules_group"],
-            1,
+            1, # Make default id_tax_rules_group
             unwrap=True,
         )
         tax_ids = tax_group.tax_ids
@@ -372,31 +365,17 @@ class ProductInventoryBatchImporter(Component):
         if filters is None:
             filters = {}
 
-        print("precheck_filter", filters)
         filters = {'action': 'list'}
         _super = super()
 
         return _super.run(filters, **kwargs)
 
     def _run_page(self, filters, **kwargs):
-        print('filters', filters)
         records = self.client.search("product_variant", filters)
         for variant_id in records:
             variant_record = self.client.get("product_variant", variant_id, {'action': 'find'})
-        # for record in records["stock_availables"]["stock_available"]:
-            # if product has variants then do not import product stock
-            # since variant stocks will be imported
-            # if record["id_product_attribute"] == "0":
-            #     variant_stock_ids = self.backend_adapter.search(
-            #         {
-            #             "filter[id_product]": record["id_product"],
-            #             "filter[id_product_attribute]": ">[0]",
-            #         }
-            #     )
-            #     if variant_stock_ids:
-            #         continue
-
             self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
+
         return records
     
     def _import_record(self, record_id, record=None, **kwargs):
@@ -420,12 +399,6 @@ class ProductInventoryImporter(Component):
 
     def _get_binding(self):
         record = self.pos_record
-        print("_get_binding", record)
-        # if record["id_product_attribute"] == "0":
-        #     binder = self.binder_for("pos.product.template")
-        #     return binder.to_internal(record["id_product"])
-        
-        # binder = self.binder_for("pos.product.template")
         binder = self.binder_for("pos.product.variant")
 
         return binder.to_internal(record["id"])
@@ -455,7 +428,6 @@ class ProductInventoryImporter(Component):
             products = binding.odoo_id
 
         for product in products:
-            print("_import_qty", product.id, product.product_tmpl_id.id, qty)
             vals = {
                 "product_id": product.id,
                 "product_tmpl_id": product.product_tmpl_id.id,
@@ -530,8 +502,6 @@ class ProductTemplateImporter(Component):
             "pos.product.variant.option.value"
         )
 
-        # pos_key = self.backend_record.get_version_pos_key("product_option_value")
-        print("attribute_line", record)
         option_values = record.get("variants", [])
         
         if not isinstance(option_values, list):
@@ -544,12 +514,7 @@ class ProductTemplateImporter(Component):
             if attr_id not in attribute_values:
                 attribute_values[attr_id] = []
             attribute_values[attr_id].append(value_id)
-            print('option_value', option_value)
-            print('value', value)
-            print('attr_id', attr_id)
-            print('value_id', value_id)
         
-        print('attribute_values', attribute_values)
 
         remaining_attr_lines = template.with_context(
             active_test=False
@@ -582,7 +547,6 @@ class ProductTemplateImporter(Component):
         self.work.parent_pos_record = self.pos_record
         if "parent_pos_record" not in self.work._propagate_kwargs:
             self.work._propagate_kwargs.append("parent_pos_record")
-        print("_import_dependency", variant["id"])
         self._import_dependency(
             variant["id"], "pos.product.variant", always=True, **kwargs
         )
@@ -658,7 +622,6 @@ class ProductTemplateImporter(Component):
 
     def _import_default_category(self):
         record = self.pos_record
-        # print(record)
         if int(record["category_id"]):
             try:
                 self._import_dependency(

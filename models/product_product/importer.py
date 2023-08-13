@@ -20,7 +20,6 @@ class ProductCombinationImporter(Component):
     _apply_on = "pos.product.variant"
 
     def template_attribute_lines(self, option_values): # Not run
-        print("template_attribute_lines", option_values)
         record = self.pos_record
         template_binder = self.binder_for("pos.product.template")
         template = template_binder.to_internal(record["product_id"]).odoo_id
@@ -139,7 +138,6 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def from_main_template(self, record):
-        print("from_main_template", record)
         main_template = self.get_main_template_binding(record)
         result = {}
         for attribute in self.from_main:
@@ -159,15 +157,13 @@ class ProductCombinationMapper(Component):
 
     def get_main_template_binding(self, record):
         template_binder = self.binder_for("pos.product.template")
-        print('get_main_template_binding', record)
+
         return template_binder.to_internal(record["product_id"])
 
     def _get_option_value(self, record):
-        print("_get_option_value", record)
         option_values = [{"id": record["id"]}]
         template_binding = self.get_main_template_binding(record)
         template = template_binding.odoo_id
-        print("template_binding", template_binding)
         if type(option_values) is dict:
             option_values = [option_values]
         tmpl_values = template.attribute_line_ids.mapped("product_template_value_ids")
@@ -176,7 +172,6 @@ class ProductCombinationMapper(Component):
                 "pos.product.variant.option.value"
             )
             option_value_binding = option_value_binder.to_internal(option_value["id"])
-            print("option_value_binding", option_value_binding)
             tmpl_value = tmpl_values.filtered(
                 lambda v: v.product_attribute_value_id.id
                 == option_value_binding.odoo_id.id
@@ -189,7 +184,7 @@ class ProductCombinationMapper(Component):
         results = []
         for tmpl_attr_value in self._get_option_value(record):
             results.append(tmpl_attr_value.id)
-        print("product_template_attribute_value_ids", results)
+            
         return {"product_template_attribute_value_ids": [(6, 0, results)]}
 
     @mapping
@@ -211,7 +206,6 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def default_code(self, record):
-        # print('default_code', record)
         code = record.get("reference")
         if not code:
             code = "{}_{}".format(record["product_id"], record["id"])
@@ -219,7 +213,6 @@ class ProductCombinationMapper(Component):
             not self._product_code_exists(code)
             or self.backend_record.matching_product_ch == "reference"
         ):
-            print('matching_product_ch == "reference" OF default_code')
             return {"default_code": code}
         i = 1
         current_code = "{}_{}".format(code, i)
@@ -242,15 +235,15 @@ class ProductCombinationMapper(Component):
             return {"barcode": barcode}
         return {}
 
-    def _get_tax_ids(self, record):
+    def _get_tax_ids(self, record): # Make default id_tax_rules_group
         product_tmpl_adapter = self.component(
             usage="backend.adapter", model_name="pos.product.template"
         )
-        # tax_group = product_tmpl_adapter.read(record["product_id"])
         tax_group = {"id_tax_rules_group": 1}
         tax_group = self.binder_for("pos.account.tax.group").to_internal(
             tax_group["id_tax_rules_group"], unwrap=True
         )
+
         return tax_group.tax_ids
 
     def _apply_taxes(self, tax, price):
@@ -287,15 +280,12 @@ class ProductCombinationMapper(Component):
         """Will bind the product to an existing one with the same code"""
         if self.backend_record.matching_product_template:
             code = record.get(self.backend_record.matching_product_ch)
-            print("code", code)
             if self.backend_record.matching_product_ch == "reference":
-                print("long herererere")
                 if code:
                     product = self.env["product.product"].search(
                         [("default_code", "=", code)], limit=1
                     )
                     if product:
-                        print('matching_product_ch == "reference" OF odoo_id', product.id)
                         return {"odoo_id": product.id}
             if self.backend_record.matching_product_ch == "barcode":
                 if code:
@@ -303,13 +293,11 @@ class ProductCombinationMapper(Component):
                         [("barcode", "=", code)], limit=1
                     )
                     if product:
-                        print('matching_product_ch == "barcode"', product.id)
                         return {"odoo_id": product.id}
 
         template = self.get_main_template_binding(record).odoo_id
         # if variant already exists linked it since we can't have 2 variants with
         # the exact same attributes
-        print('template', template)
         option_values = [{"id" : record["id"]}]
 
         option_value_binder = self.binder_for(
@@ -321,20 +309,13 @@ class ProductCombinationMapper(Component):
             for option_value in option_values
         ]
 
-        print("value_ids", value_ids)
-        print('template.product_variant_ids', template.product_variant_ids)
         for variant in template.product_variant_ids:
-            print('product_template_attribute_value_ids', variant.product_template_attribute_value_ids.mapped(
-                        "product_attribute_value_id"
-                    ).ids)
             if sorted(
                 variant.product_template_attribute_value_ids.mapped(
                     "product_attribute_value_id"
                 ).ids
             ) == sorted(value_ids):
-                print("variant.id", variant.id)
                 return {"odoo_id": variant.id}
-        print("not_thing_here")
         return {}
 
 
@@ -345,11 +326,9 @@ class ProductCombinationOptionImporter(Component):
 
     def _import_values(self, attribute_binding):
         record = self.pos_record
-        print("_import_values", record)
         option_values = [{"id": record["id"]}]
         if not isinstance(option_values, list):
             option_values = [option_values]
-        print('option_values', option_values)
         for option_value in option_values:
             self._import_dependency(
                 option_value["id"], "pos.product.variant.option.value"
@@ -374,7 +353,6 @@ class ProductCombinationOptionMapper(Component):
     @only_create
     @mapping
     def odoo_id(self, record):
-        print('odoo_id', record)
         name = self.name(record).get("name")
         binding = self.env["product.attribute"].search(
             [("name", "=", name)],
@@ -385,23 +363,6 @@ class ProductCombinationOptionMapper(Component):
 
     @mapping
     def name(self, record):
-        # name = None
-        # if "language" in record["name"]:
-        #     language_binder = self.binder_for("pos.res.lang")
-        #     languages = record["name"]["language"]
-        #     if not isinstance(languages, list):
-        #         languages = [languages]
-        #     for lang in languages:
-        #         erp_language = language_binder.to_internal(lang["attrs"]["id"])
-        #         if not erp_language:
-        #             continue
-        #         if erp_language.code == "en_US":
-        #             name = lang["value"]
-        #             break
-        #     if name is None:
-        #         name = languages[0]["value"]
-        # else:
-        #     name = record["name"]
         return {"name": record["size"] + "-" + str(record["product_id"])}
 
     @mapping
@@ -443,9 +404,6 @@ class ProductCombinationOptionValueMapper(Component):
     _inherit = "pos.import.mapper"
     _apply_on = "pos.product.variant.option.value"
 
-    # direct = [
-    #     ("name", "name"),
-    # ]
 
     @mapping
     def name(self, record):
@@ -454,7 +412,6 @@ class ProductCombinationOptionValueMapper(Component):
     @only_create
     @mapping
     def odoo_id(self, record):
-        print("odoo_id_record", record)
         attribute_binder = self.binder_for("pos.product.variant.option")
         attribute = attribute_binder.to_internal(
             record["id"], unwrap=True
@@ -469,12 +426,9 @@ class ProductCombinationOptionValueMapper(Component):
 
     @mapping
     def attribute_id(self, record):
-        print("attribute_id_record", record)
         binder = self.binder_for("pos.product.variant.option")
         attribute = binder.to_internal(record["id"], unwrap=True)
-        print("attribute_id", attribute.id)
-        # if isinstance(attribute.id, bool): # Trick
-        #     return {"attribute_id": 37}
+        
         return {"attribute_id": attribute.id}
 
     @mapping

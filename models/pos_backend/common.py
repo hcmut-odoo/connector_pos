@@ -276,20 +276,6 @@ class PosBackend(models.Model):
         :return: True if the base data synchronization is successful.
         :rtype: bool
         """
-        # Haven't been implemented yet
-        # for backend in self:
-        #     for model_name in [
-        #         # "pos.res.country",
-        #         # "pos.res.currency",
-        #         # "pos.account.tax",
-        #     ]:
-        #         with backend.work_on(model_name) as work:
-        #             importer = work.component(usage="auto.matching.importer")
-        #             importer.run()
-
-        #     self.env["pos.account.tax.group"].import_batch(backend)
-        #     self.env["pos.sale.order.state"].import_batch(backend)
-        print("doing synchonize ....")
         return True
 
     def _check_connection(self):

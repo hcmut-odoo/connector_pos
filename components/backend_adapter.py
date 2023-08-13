@@ -167,7 +167,6 @@ class GenericAdapter(AbstractComponent):
         print(
             "method search, model %s, filters %s", self._pos_model, str(filters)
         )
-        print("method search, model %s, filters %s", self._pos_model, str(filters))
         return self.client.search(self._pos_model, filters)
 
 
@@ -275,7 +274,9 @@ class GenericAdapter(AbstractComponent):
             Exception: If an error occurs during the delete operation.
 
         """
-        print("method delete, model %s, ids %s", resource, str(ids))
+        print(
+            "method delete, model %s, ids %s", resource, str(ids)
+        )
         # Delete a record(s) on the external system
         return self.client.delete(resource, ids)
 
