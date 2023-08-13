@@ -34,5 +34,5 @@ class ProductPricelistMapper(Component):
 
 class ProductPricelistImporter(Component):
     _name = "pos.groups.pricelist.importer"
-    _inherit = "pos.translatable.record.importer"
+    _inherit = "pos.importer"
     _apply_on = "pos.groups.pricelist"

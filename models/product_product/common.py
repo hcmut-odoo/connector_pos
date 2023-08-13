@@ -9,10 +9,10 @@ class ProductProduct(models.Model):
     _name = "product.product"
     _inherit = [_name, "base_multi_image.owner"]
 
-    pos_combinations_bind_ids = fields.One2many(
-        comodel_name="pos.product.combination",
+    pos_variants_bind_ids = fields.One2many(
+        comodel_name="pos.product.variant",
         inverse_name="odoo_id",
-        string="Pos Bindings (combinations)",
+        string="Pos Bindings (variants)",
     )
     default_on = fields.Boolean(string="Default On")
     impact_price = fields.Float(string="Price Impact", digits="Product Price")
@@ -20,12 +20,12 @@ class ProductProduct(models.Model):
     def update_pos_qty(self):
         for product in self:
             product_template = product.product_tmpl_id
-            has_combinations = len(product_template.attribute_line_ids) > 0
-            if has_combinations:
-                # Recompute qty in combination binding
-                for combination_binding in product.pos_combinations_bind_ids:
-                    combination_binding.recompute_pos_qty()
-            # Recompute qty in product template binding if any combination
+            has_variants = len(product_template.attribute_line_ids) > 0
+            if has_variants:
+                # Recompute qty in variant binding
+                for variant_binding in product.pos_variants_bind_ids:
+                    variant_binding.recompute_pos_qty()
+            # Recompute qty in product template binding if any variant
             # if modified
             for pos_product in product.product_tmpl_id.pos_bind_ids:
                 pos_product.recompute_pos_qty()
@@ -33,19 +33,19 @@ class ProductProduct(models.Model):
     def update_pos_quantities(self):
         for product in self:
             product_template = product.product_tmpl_id
-            pos_combinations = (
+            pos_variants = (
                 len(product_template.attribute_line_ids) > 0
                 and product_template.product_variant_ids
             ) or []
-            if not pos_combinations:
+            if not pos_variants:
                 for pos_product in product_template.pos_bind_ids:
                     pos_product.recompute_pos_qty()
             else:
-                for pos_combination in pos_combinations:
+                for pos_variant in pos_variants:
                     for (
-                        combination_binding
-                    ) in pos_combination.pos_bind_ids:
-                        combination_binding.recompute_pos_qty()
+                        variant_binding
+                    ) in pos_variant.pos_bind_ids:
+                        variant_binding.recompute_pos_qty()
         return True
 
     @api.depends("impact_price")
@@ -115,7 +115,7 @@ class ProductProduct(models.Model):
 
 
 class PosProductCombination(models.Model):
-    _name = "pos.product.combination"
+    _name = "pos.product.variant"
     _inherit = [
         "pos.binding.odoo",
         "pos.product.qty.mixin",
@@ -143,7 +143,7 @@ class PosProductCombination(models.Model):
     def export_inventory(self, fields=None):
         """Export the inventory configuration and quantity of a product."""
         backend = self.backend_id
-        with backend.work_on("pos.product.combination") as work:
+        with backend.work_on("pos.product.variant") as work:
             exporter = work.component(usage="inventory.exporter")
             return exporter.run(self, fields)
 
@@ -155,27 +155,27 @@ class PosProductCombination(models.Model):
             ]
         ).recompute_pos_qty()
 
-    def set_product_image_variant(self, backend, combination_ids, **kwargs):
-        with backend.work_on(self._name) as work:
-            importer = work.component(usage="record.importer")
-            return importer.set_variant_images(combination_ids, **kwargs)
+    # def set_product_image_variant(self, backend, variant_ids, **kwargs):
+    #     with backend.work_on(self._name) as work:
+    #         importer = work.component(usage="record.importer")
+    #         return importer.set_variant_images(variant_ids, **kwargs)
 
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
 
     pos_bind_ids = fields.One2many(
-        comodel_name="pos.product.combination.option",
+        comodel_name="pos.product.variant.option",
         inverse_name="odoo_id",
-        string="Pos Bindings (combinations)",
+        string="Pos Bindings (variants)",
     )
 
 
 class PosProductCombinationOption(models.Model):
-    _name = "pos.product.combination.option"
+    _name = "pos.product.variant.option"
     _inherit = "pos.binding.odoo"
     _inherits = {"product.attribute": "odoo_id"}
-    _description = "Product combination option pos bindings"
+    _description = "Product variant option pos bindings"
 
     odoo_id = fields.Many2one(
         comodel_name="product.attribute",
@@ -196,17 +196,17 @@ class ProductAttributeValue(models.Model):
     _inherit = "product.attribute.value"
 
     pos_bind_ids = fields.One2many(
-        comodel_name="pos.product.combination.option.value",
+        comodel_name="pos.product.variant.option.value",
         inverse_name="odoo_id",
         string="Pos Bindings",
     )
 
 
 class PosProductCombinationOptionValue(models.Model):
-    _name = "pos.product.combination.option.value"
+    _name = "pos.product.variant.option.value"
     _inherit = "pos.binding"
     _inherits = {"product.attribute.value": "odoo_id"}
-    _description = "Product combination option valuepos bindings"
+    _description = "Product variant option valuepos bindings"
 
     odoo_id = fields.Many2one(
         comodel_name="product.attribute.value",
@@ -219,31 +219,31 @@ class PosProductCombinationOptionValue(models.Model):
         default=1,
     )
     id_attribute_group = fields.Many2one(
-        comodel_name="pos.product.combination.option"
+        comodel_name="pos.product.variant.option"
     )
 
 
 class ProductCombinationAdapter(Component):
-    _name = "pos.product.combination.adapter"
+    _name = "pos.product.variant.adapter"
     _inherit = "pos.adapter"
-    _apply_on = "pos.product.combination"
-    _pos_model = "combinations"
-    _export_node_name = "combination"
+    _apply_on = "pos.product.variant"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"
 
 
 class ProductCombinationOptionAdapter(Component):
-    _name = "pos.product.combination.option.adapter"
+    _name = "pos.product.variant.option.adapter"
     _inherit = "pos.adapter"
-    _apply_on = "pos.product.combination.option"
+    _apply_on = "pos.product.variant.option"
 
-    _pos_model = "product_options"
-    _export_node_name = "product_options"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"
 
 
 class ProductCombinationOptionValueAdapter(Component):
-    _name = "pos.product.combination.option.value.adapter"
+    _name = "pos.product.variant.option.value.adapter"
     _inherit = "pos.adapter"
-    _apply_on = "pos.product.combination.option.value"
+    _apply_on = "pos.product.variant.option.value"
 
-    _pos_model = "product_option_values"
-    _export_node_name = "product_option_value"
+    _pos_model = "product_variant"
+    _export_node_name = "product_variant"
