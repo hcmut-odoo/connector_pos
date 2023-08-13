@@ -51,7 +51,7 @@ class PosResPartner(models.Model):
         now_fmt =  fields.Datetime.now()
 
         if since_date:
-            date = {'end': since_date}
+            date = {'start': since_date}
         else:
             date = {'end': now_fmt}
 
