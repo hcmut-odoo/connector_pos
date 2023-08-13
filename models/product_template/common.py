@@ -155,12 +155,9 @@ class PosProductTemplate(models.Model):
 
     def import_products(self, backend, since_date=None, **kwargs):
         now_fmt = datetime.datetime.now()
-        
-        if not isinstance(since_date, datetime.datetime):
-            since_date = now_fmt
 
         if since_date:
-            date = {'end': since_date}
+            date = {'start': since_date}
         else:
             date = {'end': now_fmt}
 
