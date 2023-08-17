@@ -3,7 +3,7 @@
 import logging
 from datetime import timedelta
 
-from pospyt import PosWebServiceDict
+from ....pospyt.pospyt import PosWebServiceDict
 
 from odoo import api, fields, models
 
@@ -102,7 +102,7 @@ class PosSaleOrder(models.Model):
 
     def find_pos_state(self):
         self.ensure_one()
-        state_list_model = self.env["sale.order.state.list"]
+        state_list_model = self.env["pos.sale.order.state.list"]
         state_lists = state_list_model.search([("name", "=", self.state)])
         for state_list in state_lists:
             if state_list.pos_state_id.backend_id == self.backend_id:
@@ -156,10 +156,10 @@ class PosSaleOrderLine(models.Model):
 
     @api.model
     def create(self, vals):
-        ps_sale_order = self.env["pos.sale.order"].search(
+        pos_sale_order = self.env["pos.sale.order"].search(
             [("id", "=", vals["pos_order_id"])], limit=1
         )
-        vals["order_id"] = ps_sale_order.odoo_id.id
+        vals["order_id"] = pos_sale_order.odoo_id.id
         return super().create(vals)
 
 
@@ -185,10 +185,10 @@ class PosSaleOrderLineDiscount(models.Model):
 
     @api.model
     def create(self, vals):
-        ps_sale_order = self.env["pos.sale.order"].search(
+        pos_sale_order = self.env["pos.sale.order"].search(
             [("id", "=", vals["pos_order_id"])], limit=1
         )
-        vals["order_id"] = ps_sale_order.odoo_id.id
+        vals["order_id"] = pos_sale_order.odoo_id.id
         return super().create(vals)
 
 
@@ -262,7 +262,7 @@ class PosSaleOrderListener(Component):
             if not record.pos_bind_ids:
                 return
             # a quick test to see if it is worth trying to export sale state
-            states = self.env["sale.order.state.list"].search(
+            states = self.env["pos.sale.order.state.list"].search(
                 [("name", "=", record.state)]
             )
             if states:

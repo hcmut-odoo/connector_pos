@@ -5,9 +5,9 @@ from odoo.addons.connector.components.mapper import mapping
 
 
 class SaleOrderStateMapper(Component):
-    _name = "prestashop.sale.order.state.mapper"
-    _inherit = "prestashop.import.mapper"
-    _apply_on = "prestashop.sale.order.state"
+    _name = "pos.sale.order.state.mapper"
+    _inherit = "pos.import.mapper"
+    _apply_on = "pos.sale.order.state"
 
     direct = [
         ("name", "name"),
@@ -21,18 +21,18 @@ class SaleOrderStateMapper(Component):
 class SaleOrderStateImporter(Component):
     """Import one translatable record"""
 
-    _name = "prestashop.sale.order.state.importer"
-    _inherit = "prestashop.translatable.record.importer"
-    _apply_on = "prestashop.sale.order.state"
+    _name = "pos.sale.order.state.importer"
+    _inherit = "pos.importer"
+    _apply_on = "pos.sale.order.state"
 
     _translatable_fields = {
-        "prestashop.sale.order.state": [
+        "pos.sale.order.state": [
             "name",
         ],
     }
 
 
 class SaleOrderStateBatchImporter(Component):
-    _name = "prestashop.sale.order.state.batch.importer"
-    _inherit = "prestashop.direct.batch.importer"
-    _apply_on = "prestashop.sale.order.state"
+    _name = "pos.sale.order.state.batch.importer"
+    _inherit = "pos.direct.batch.importer"
+    _apply_on = "pos.sale.order.state"

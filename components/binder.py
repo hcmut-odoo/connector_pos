@@ -30,4 +30,6 @@ class PosModelBinder(Component):
         "pos.product.image",
         "pos.product.template",
         "pos.product.variant.option",
+        "pos.sale.order",
+        "pos.sale.order.state",
     ]
