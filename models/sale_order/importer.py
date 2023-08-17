@@ -22,7 +22,7 @@ _logger = logging.getLogger(__name__)
 try:
     from ....pospyt.pospyt import PosWebServiceError
 except ImportError:
-    _logger.debug("Cannot import from `prestapyt`")
+    _logger.debug("Cannot import from `pospyt`")
 
 
 class PosSaleOrderOnChange(SaleOrderOnChange):
@@ -31,7 +31,7 @@ class PosSaleOrderOnChange(SaleOrderOnChange):
 
 class SaleImportRule(Component):
     _name = "pos.sale.import.rule"
-    _inherit = ["base.pos.connector", "pos.adapter"]
+    _inherit = ["pos.adapter","base.pos.connector"]
     _apply_on = "pos.sale.order"
     _usage = "sale.import.rule"
 
@@ -159,7 +159,7 @@ class SaleImportRule(Component):
                 raise FailedJobError(
                     _(
                         "The configuration is missing "
-                        "for sale order state with PS ID=%s.\n\n"
+                        "for sale order state with POS ID=%s.\n\n"
                         "Resolution:\n"
                         " - Use the automatic import in 'Connectors > Pos "
                         "Backends', button 'Synchronize base data'."
@@ -169,7 +169,7 @@ class SaleImportRule(Component):
             if state not in self.backend_record.importable_order_state_ids:
                 raise NothingToDoJob(
                     _(
-                        "Import of the order with PS ID=%s canceled "
+                        "Import of the order with POS ID=%s canceled "
                         "because its state is not importable"
                     )
                     % record["id"]
@@ -178,7 +178,7 @@ class SaleImportRule(Component):
 
 class SaleOrderImportMapper(Component):
     _name = "pos.sale.order.mapper"
-    _inherit = ["pos.import.mapper", "pos.adapter"]
+    _inherit = ["pos.adapter","pos.import.mapper"]
     _apply_on = "pos.sale.order"
 
     direct = [
@@ -427,17 +427,17 @@ class SaleOrderImportMapper(Component):
         )
 
         values.update(sale_vals)
-        presta_line_list = []
+        pos_line_list = []
 
         for line_vals_command in values["pos_order_line_ids"]:
             if line_vals_command[0] not in (0, 1):  # create or update values
                 continue
 
-            presta_line_vals = line_vals_command[2]
+            pos_line_vals = line_vals_command[2]
 
             line_vals = {
                 k: v
-                for k, v in presta_line_vals.items()
+                for k, v in pos_line_vals.items()
                 if k in self.env["sale.order.line"]._fields.keys()
             }
 
@@ -445,12 +445,12 @@ class SaleOrderImportMapper(Component):
                 line_vals, ["product_id"]
             )
 
-            presta_line_vals.update(line_vals)
-            presta_line_list.append(
-                (line_vals_command[0], line_vals_command[1], presta_line_vals)
+            pos_line_vals.update(line_vals)
+            pos_line_list.append(
+                (line_vals_command[0], line_vals_command[1], pos_line_vals)
             )
 
-        values["pos_order_line_ids"] = presta_line_list
+        values["pos_order_line_ids"] = pos_line_list
 
         return values
 
