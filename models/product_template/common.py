@@ -169,7 +169,7 @@ class PosProductTemplate(models.Model):
         return True
 
     def import_inventory(self, backend):
-        with backend.work_on("_import_stock_available") as work:
+        with backend.work_on("pos._import_stock_available") as work:
             importer = work.component(usage="batch.importer")
             return importer.run()
 
@@ -193,9 +193,9 @@ class TemplateAdapter(Component):
 
 
 class ProductInventoryAdapter(Component):
-    _name = "_import_stock_available.adapter"
+    _name = "pos._import_stock_available.adapter"
     _inherit = "pos.adapter"
-    _apply_on = "_import_stock_available"
+    _apply_on = "pos._import_stock_available"
     _pos_model = "product_variant"
     _export_node_name = "product_variant"
 
