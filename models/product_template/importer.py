@@ -345,7 +345,7 @@ class TemplateMapper(Component):
 
 class ImportInventory(models.TransientModel):
     # In actual connector version is mandatory use a model
-    _name = "_import_stock_available"
+    _name = "pos._import_stock_available"
     _description = "Dummy Import Inventory Transient model"
 
     @api.model
@@ -359,7 +359,7 @@ class ImportInventory(models.TransientModel):
 class ProductInventoryBatchImporter(Component):
     _name = "pos._import_stock_available.batch.importer"
     _inherit = ["pos.delayed.batch.importer", "pos.adapter"]
-    _apply_on = "_import_stock_available"
+    _apply_on = "pos._import_stock_available"
 
     def run(self, filters=None, **kwargs):
         if filters is None:
@@ -381,7 +381,7 @@ class ProductInventoryBatchImporter(Component):
     def _import_record(self, record_id, record=None, **kwargs):
         """Delay the import of the records"""
         assert record
-        self.env["_import_stock_available"].with_delay().import_record(
+        self.env["pos._import_stock_available"].with_delay().import_record(
             self.backend_record, record_id, record=record, **kwargs
         )
 
@@ -389,7 +389,7 @@ class ProductInventoryBatchImporter(Component):
 class ProductInventoryImporter(Component):
     _name = "pos._import_stock_available.importer"
     _inherit = ["pos.importer", "pos.adapter"]
-    _apply_on = "_import_stock_available"
+    _apply_on = "pos._import_stock_available"
 
     def _get_quantity(self, record):
         filters = {'action': 'find'}
