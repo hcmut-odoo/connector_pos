@@ -29,7 +29,7 @@ class PosSaleOrderState(models.Model):
     _description = "Sale order state pos bindings"
 
     openerp_state_ids = fields.One2many(
-        comodel_name="sale.order.state.list",
+        comodel_name="pos.sale.order.state.list",
         inverse_name="pos_state_id",
         string="Odoo States",
     )
@@ -42,7 +42,7 @@ class PosSaleOrderState(models.Model):
 
 
 class SaleOrderStateList(models.Model):
-    _name = "sale.order.state.list"
+    _name = "pos.sale.order.state.list"
     _description = "Sale Order State List"
 
     name = fields.Selection(
