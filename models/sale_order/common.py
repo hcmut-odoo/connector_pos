@@ -211,21 +211,21 @@ class SaleOrderAdapter(Component):
     _pos_model = "order"
     _export_node_name = "order"
 
-    def update_sale_state(self, pos_id, datas):
-        return self.client.add("order_histories", datas)
+    # def update_sale_state(self, pos_id, datas):
+    #     return self.client.add("order_histories", datas)
 
-    def search(self, filters=None):
-        result = super().search(filters=filters)
-        shop = self.env["pos.backend"].search(
-            [("backend_id", "=", self.backend_record.id)]
-        )
+    # def search(self, filters=None):
+    #     result = super().search(filters=filters)
+    #     shop = self.env["pos.backend"].search(
+    #         [("backend_id", "=", self.backend_record.id)]
+    #     )
 
-        api = PosWebServiceDict(
-            shop.default_url, self.pos.webservice_key
-        )
-        result += api.search(self._pos_model, filters)
+    #     api = PosWebServiceDict(
+    #         shop.default_url, self.pos.webservice_key
+    #     )
+    #     result += api.search(self._pos_model, filters)
 
-        return result
+    #     return result
 
 
 class SaleOrderLineAdapter(Component):
