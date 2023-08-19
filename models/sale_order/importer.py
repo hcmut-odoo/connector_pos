@@ -31,7 +31,7 @@ class PosSaleOrderOnChange(SaleOrderOnChange):
 
 class SaleImportRule(Component):
     _name = "pos.sale.import.rule"
-    _inherit = ["pos.adapter","base.pos.connector"]
+    _inherit = ["pos.adapter", "base.pos.connector"]
     _apply_on = "pos.sale.order"
     _usage = "sale.import.rule"
 
@@ -178,7 +178,7 @@ class SaleImportRule(Component):
 
 class SaleOrderImportMapper(Component):
     _name = "pos.sale.order.mapper"
-    _inherit = ["pos.adapter","pos.import.mapper"]
+    _inherit = ["pos.adapter", "pos.import.mapper"]
     _apply_on = "pos.sale.order"
 
     direct = [
@@ -845,7 +845,7 @@ class SaleOrderLineMapper(Component):
 
 class SaleOrderLineDiscountMapper(Component):
     _name = "pos.sale.order.discount.importer"
-    _inherit = ["pos.import.mapper", "pos.adapter"]
+    _inherit = ["pos.adapter", "pos.import.mapper"]
     _apply_on = "pos.sale.order.line.discount"
 
     direct = []

@@ -77,7 +77,7 @@ class PosSaleOrder(models.Model):
             date = {"end": now_fmt}
 
         self.env["pos.sale.order"].import_batch(
-            backend, filters={'data': date, 'action': 'list'}, priority=5, max_retries=0
+            backend, filters={'date': date, 'action': 'list'}, priority=5, max_retries=0
         )
 
         # if since_date:
@@ -209,23 +209,24 @@ class SaleOrderAdapter(Component):
     _inherit = "pos.adapter"
     _apply_on = "pos.sale.order"
     _pos_model = "order"
-    _export_node_name = "order"
 
-    def update_sale_state(self, pos_id, datas):
-        return self.client.add("order_histories", datas)
+    # _export_node_name = "order"
 
-    def search(self, filters=None):
-        result = super().search(filters=filters)
-        shop = self.env["pos.backend"].search(
-            [("backend_id", "=", self.backend_record.id)]
-        )
+    # def update_sale_state(self, pos_id, datas):
+    #     return self.client.add("order_histories", datas)
 
-        api = PosWebServiceDict(
-            shop.default_url, self.pos.webservice_key
-        )
-        result += api.search(self._pos_model, filters)
+    # def search(self, filters=None):
+    #     result = super().search(filters=filters)
+    #     shop = self.env["pos.backend"].search(
+    #         [("backend_id", "=", self.backend_record.id)]
+    #     )
 
-        return result
+    #     api = PosWebServiceDict(
+    #         shop.default_url, self.pos.webservice_key
+    #     )
+    #     result += api.search(self._pos_model, filters)
+
+    #     return result
 
 
 class SaleOrderLineAdapter(Component):
