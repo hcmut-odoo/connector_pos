@@ -70,14 +70,14 @@ class PosSaleOrder(models.Model):
     def import_orders_since(self, backend, since_date=None, **kwargs):
         """Prepare the import of orders modified on Pos"""
         now_fmt = fields.Datetime.now()
-
+        print("1st import_orders_since")
+        print(since_date)
         if since_date:
-            date = {"start": since_date}
+            date = {"end": since_date}
         else:
             date = {"end": now_fmt}
-
         self.env["pos.sale.order"].import_batch(
-            backend, filters={'data': date, 'action': 'list'}, priority=5, max_retries=0
+            backend, filters={'date': date, 'action': 'list'}, priority=5, max_retries=0
         )
 
         # if since_date:
@@ -232,14 +232,14 @@ class SaleOrderLineAdapter(Component):
     _name = "pos.sale.order.line.adapter"
     _inherit = "pos.adapter"
     _apply_on = "pos.sale.order.line"
-    _pos_model = "order_details"
+    _pos_model = "order"
 
 
 class OrderPaymentAdapter(Component):
     _name = "__not_exist_pos.payment.adapter"
     _inherit = "pos.adapter"
     _apply_on = "__not_exist_pos.payment"
-    _pos_model = "order_payments"
+    _pos_model = "order"
 
 
 # class OrderDiscountAdapter(Component):
