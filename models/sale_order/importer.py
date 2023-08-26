@@ -261,9 +261,9 @@ class SaleOrderImportMapper(Component):
         return len(sale_order) == 1
 
     direct = [
-        ("order_id", "order_id"),
+        # ("order_id", "order_id"),
         # ("delivery_number", "pos_delivery_number"),
-        ("total", "total"),
+        # ("total", "total"),
         # ("total_shipping_tax_incl", "total_shipping_tax_included"),
         # ("total_shipping_tax_excl", "total_shipping_tax_excluded"),
     ]
@@ -288,11 +288,11 @@ class SaleOrderImportMapper(Component):
         if pos_invoice_ids[0]:
             self.pos_invoice_id = pos_invoice_ids[0]
         print("self.pos_invoice_id",self.pos_invoice_id)
-        return {"invoice_number":self.pos_invoice_id}
+        return {"pos_invoice_number":self.pos_invoice_id}
     
-    @mapping
-    def order_id(self, record):        
-        return {"order_id":record["id"]}
+    # @mapping
+    # def order_id(self, record):        
+    #     return {"order_id":record["id"]}
 
     @mapping
     def total_paid(self, record):
@@ -312,29 +312,29 @@ class SaleOrderImportMapper(Component):
         pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})["data"]
         self.pos_invoice_record = pos_invoice_record
         print("pos_invoice_record",pos_invoice_record)
-        return {"total_paid":pos_invoice_record["total"]}
+        return {"total_amount":pos_invoice_record["total"]}
     
 
-    @mapping
-    def total(self, record):
-        # Same with total_paid
-        print("total",record)
-        pos_order_id = record["id"]
-        pos_invoice_ids = self.client.search('invoice', options={
-            'action': 'list', 
-            'filter': {
-                'order_id': { 
-                    'operator': 'eq', 
-                    'value': pos_order_id
-                }
-            }
-        })
+    # @mapping
+    # def total(self, record):
+    #     # Same with total_paid
+    #     print("total",record)
+    #     pos_order_id = record["id"]
+    #     pos_invoice_ids = self.client.search('invoice', options={
+    #         'action': 'list', 
+    #         'filter': {
+    #             'order_id': { 
+    #                 'operator': 'eq', 
+    #                 'value': pos_order_id
+    #             }
+    #         }
+    #     })
 
-        # pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})
-        pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})["data"]
-        self.pos_invoice_record = pos_invoice_record
-        print("pos_invoice_record",pos_invoice_record)
-        return {"total":pos_invoice_record["total"]}
+    #     # pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})
+    #     pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})["data"]
+    #     self.pos_invoice_record = pos_invoice_record
+    #     print("pos_invoice_record",pos_invoice_record)
+    #     return {"total":pos_invoice_record["total"]}
 
     @mapping
     def name(self, record):
@@ -632,6 +632,35 @@ class SaleOrderImporter(Component):
 
     def _create(self, data):
         print("sale_order _create", data)
+        # pos_data_should_be = {
+        #     "order_id": 1,
+        #     "total": "129000.00",
+        #     "backend_id": 1,
+        #     "invoice_number": 1,
+        #     "name": "Dien Ha",
+        #     "partner_id": 67,
+        #     "total_paid": "129000.00",
+        #     "total_amount_tax": 12900,
+        #     "pos_order_line_ids": [],
+        #     "partner_invoice_id": 67,
+        #     "partner_shipping_id": 67,
+        #     "pricelist_id": 1,
+        #     "fiscal_position_id": "",
+        #     "workflow_process_id": ""
+        #     }
+        # pos_data_current = {
+        #     "pos_invoice_number": data["invoice_number"],
+        #     "total_amount": data["total_paid"],
+        #     "backend_id": data["backend_id"],
+        #     "name": data["name"],
+        #     "partner_id": data["partner_id"],
+        #     "partner_invoice_id": data["partner_invoice_id"],
+        #     "partner_shipping_id": data["partner_shipping_id"],
+        #     "pos_order_line_ids": data["pos_order_line_ids"],
+        #     "fiscal_position_id": data["fiscal_position_id"],
+        #     "workflow_process_id": data["workflow_process_id"]
+        # }
+
         binding = super()._create(data)
         if binding.fiscal_position_id:
             binding.odoo_id._compute_tax_id()
@@ -713,41 +742,41 @@ class SaleOrderLineMapper(Component):
         # return self.pos_product_record["name"]
         return {"name": record["name"]}
 
-    @mapping
-    def id(self, record):
-        pass
+    # @mapping
+    # def id(self, record):
+    #     pass
 
-    @mapping
-    def product_quantity(self, record):
-        # if not self.pos_cart_item_record:
-        #     pos_order_id = record["id"]
+    # @mapping
+    # def product_quantity(self, record):
+    #     # if not self.pos_cart_item_record:
+    #     #     pos_order_id = record["id"]
         
-        #     # Order item ids
-        #     pos_order_item_ids = self.client.search('order_item', options={
-        #         'action': 'list', 
-        #         'filter': {
-        #             'order_id': { 
-        #                 'operator': 'eq', 
-        #                 'value': pos_order_id
-        #             }
-        #         }
-        #     })
+    #     #     # Order item ids
+    #     #     pos_order_item_ids = self.client.search('order_item', options={
+    #     #         'action': 'list', 
+    #     #         'filter': {
+    #     #             'order_id': { 
+    #     #                 'operator': 'eq', 
+    #     #                 'value': pos_order_id
+    #     #             }
+    #     #         }
+    #     #     })
 
-        #     # Order item record
-        #     self.pos_order_item_record = self.client.get("order_item", pos_order_item_ids[0], {'action': 'find'})
+    #     #     # Order item record
+    #     #     self.pos_order_item_record = self.client.get("order_item", pos_order_item_ids[0], {'action': 'find'})
             
-        #     # Cart item id
-        #     self.pos_cart_item_id = self.pos_order_item_record["cart_item_id"]
+    #     #     # Cart item id
+    #     #     self.pos_cart_item_id = self.pos_order_item_record["cart_item_id"]
 
-        #     # Cart item record
-        #     self.pos_cart_item_record = self.client.get("cart_item", self.pos_cart_item_id, {'action': 'find'})
+    #     #     # Cart item record
+    #     #     self.pos_cart_item_record = self.client.get("cart_item", self.pos_cart_item_id, {'action': 'find'})
 
-        # return self.pos_cart_item_record["quantity"]
-        return {"product_quantity": record["quantity"]}
+    #     # return self.pos_cart_item_record["quantity"]
+    #     return {"product_quantity": record["quantity"]}
 
-    @mapping
-    def reduction_percent(self, record):
-        return 0
+    # @mapping
+    # def reduction_percent(self, record):
+    #     return 0
 
     @mapping
     def pos_id(self, record):
