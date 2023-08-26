@@ -393,25 +393,25 @@ class ProductInventoryBatchImporter(Component):
         return _super.run(filters, **kwargs)
 
     def _run_page(self, filters, **kwargs):
-        # records = self.client.search("product_variant", filters)
-        # for variant_id in records:
-        #     variant_record = self.client.get("product_variant", variant_id, {'action': 'find'})
-        #     self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
-        print("start ProductInventoryBatchImporter _run_page")
-        records = [1]
-        record = {
-            "id": 1,
-            "product_id": 1,
-            "size": "big",
-            "color": None,
-            "extend_price": "46000.00",
-            "stock_qty": 61,
-            "deleted_at": None,
-            "created_at": "2023-10-16T16:06:17.000000Z",
-            "updated_at": "2023-10-16T16:06:17.000000Z"
-            }
-        self._import_record(1, record=record, **kwargs)
-        print("end ProductInventoryBatchImporter _run_page")
+        records = self.client.search("product_variant", filters)
+        for variant_id in records:
+            variant_record = self.client.get("product_variant", variant_id, {'action': 'find'})
+            self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
+        # print("start ProductInventoryBatchImporter _run_page")
+        # records = [1]
+        # record = {
+        #     "id": 1,
+        #     "product_id": 1,
+        #     "size": "big",
+        #     "color": None,
+        #     "extend_price": "46000.00",
+        #     "stock_qty": 61,
+        #     "deleted_at": None,
+        #     "created_at": "2023-10-16T16:06:17.000000Z",
+        #     "updated_at": "2023-10-16T16:06:17.000000Z"
+        #     }
+        # self._import_record(1, record=record, **kwargs)
+        # print("end ProductInventoryBatchImporter _run_page")
         return records
     
     def _import_record(self, record_id, record=None, **kwargs):
@@ -429,11 +429,11 @@ class ProductInventoryImporter(Component):
     _apply_on = "pos._import_stock_available"
 
     def _get_quantity(self, record):
-        # filters = {'action': 'find'}
-        # variant = self.client.get("product_variant", record["id"], filters).get("data")
+        filters = {'action': 'find'}
+        variant = self.client.get("product_variant", record["id"], filters).get("data")
 
-        # return int(variant["stock_qty"])
-        return 61
+        return int(variant["stock_qty"])
+        # return 61
 
     def _get_binding(self):
         record = self.pos_record
