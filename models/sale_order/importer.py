@@ -29,156 +29,156 @@ class PosSaleOrderOnChange(SaleOrderOnChange):
     _model_name = "pos.sale.order"
 
 
-# class SaleImportRule(Component):
-#     _name = "pos.sale.import.rule"
-#     _inherit = ["pos.adapter", "base.pos.connector"]
-#     # _inherit = ["base.pos.connector"]
-#     _apply_on = "pos.sale.order"
-#     _usage = "sale.import.rule"
+class SaleImportRule(Component):
+    _name = "pos.sale.import.rule"
+    _inherit = ["pos.adapter", "base.pos.connector"]
+    # _inherit = ["base.pos.connector"]
+    _apply_on = "pos.sale.order"
+    _usage = "sale.import.rule"
 
-#     def _rule_always(self, record, mode):
-#         print("_rule_always")
-#         """Always import the order"""
-#         return True
+    def _rule_always(self, record, mode):
+        print("_rule_always")
+        """Always import the order"""
+        return True
 
-#     def _rule_never(self, record, mode):
-#         """Never import the order"""
-#         print("_rule_never")
-#         raise NothingToDoJob(
-#             "Orders with payment modes %s "
-#             "are never imported." % record["payment_method"]
-#         )
+    def _rule_never(self, record, mode):
+        """Never import the order"""
+        print("_rule_never")
+        raise NothingToDoJob(
+            "Orders with payment modes %s "
+            "are never imported." % record["payment_method"]
+        )
 
-#     def _rule_paid(self, record, mode):
-#         """Import the order only if it has received a payment"""
-#         print("_rule_paid")
-#         if self._get_paid_amount(record) == 0.0:
-#             raise OrderImportRuleRetry(
-#                 "The order has not been paid.\nThe import will be retried later."
-#             )
+    def _rule_paid(self, record, mode):
+        """Import the order only if it has received a payment"""
+        print("_rule_paid")
+        if self._get_paid_amount(record) == 0.0:
+            raise OrderImportRuleRetry(
+                "The order has not been paid.\nThe import will be retried later."
+            )
 
-#     def _get_paid_amount(self, record):
-#         pos_order_id = record["id"]
+    def _get_paid_amount(self, record):
+        pos_order_id = record["id"]
         
-#         payment_adapter = self.component(
-#             usage="backend.adapter", model_name="invoice"
-#         )
+        payment_adapter = self.component(
+            usage="backend.adapter", model_name="invoice"
+        )
 
-#         pos_invoice_ids = payment_adapter.search({
-#             'action': 'list', 
-#             'filter': {
-#                 'order_id': { 
-#                     'operator': 'eq', 
-#                     'value': pos_order_id
-#                 }
-#             }
-#         })
+        pos_invoice_ids = payment_adapter.search({
+            'action': 'list', 
+            'filter': {
+                'order_id': { 
+                    'operator': 'eq', 
+                    'value': pos_order_id
+                }
+            }
+        })
 
-#         pos_invoice_record = payment_adapter.get(pos_invoice_ids[0], options={
-#             'action': 'find'
-#         })
+        pos_invoice_record = payment_adapter.get(pos_invoice_ids[0], options={
+            'action': 'find'
+        })
         
-#         paid_amount = 0.0
-#         paid_amount += float(pos_invoice_record["total"])
+        paid_amount = 0.0
+        paid_amount += float(pos_invoice_record["total"])
 
-#         return paid_amount
+        return paid_amount
 
-#     _rules = {
-#         "always": _rule_always,
-#         "paid": _rule_paid,
-#         "authorized": _rule_paid,
-#         "never": _rule_never,
-#     }
+    _rules = {
+        "always": _rule_always,
+        "paid": _rule_paid,
+        "authorized": _rule_paid,
+        "never": _rule_never,
+    }
 
-#     def check(self, record):
-#         """Check whether the current sale order should be imported
-#         or not. It will actually use the payment mode configuration
-#         and see if the chosen rule is fullfilled.
+    def check(self, record):
+        """Check whether the current sale order should be imported
+        or not. It will actually use the payment mode configuration
+        and see if the chosen rule is fullfilled.
 
-#         :returns: True if the sale order should be imported
-#         :rtype: boolean
-#         """
-#         print("check")
-#         pos_payment_method = record["payment_method"]
-#         mode_binder = self.binder_for("account.payment.mode")
-#         payment_mode = mode_binder.to_internal(pos_payment_method)
-#         print("payment_mode",payment_mode)
-#         if not payment_mode:
-#             raise FailedJobError(
-#                 _(
-#                     "The configuration is missing for the Payment Mode '%s'.\n\n"
-#                     "Resolution:\n"
-#                     " - Use the automatic import in 'Connectors > Pos "
-#                     "Backends', button 'Import payment modes', or:\n"
-#                     "\n"
-#                     "- Go to 'Invoicing > Configuration > Management "
-#                     "> Payment Modes'\n"
-#                     "- Create a new Payment Mode with name '%s'\n"
-#                     "-Eventually  link the Payment Method to an existing Workflow "
-#                     "Process or create a new one."
-#                 )
-#                 % (pos_payment_method, pos_payment_method)
-#             )
-#         self._rule_global(record, payment_mode)
-#         self._rule_state(record, payment_mode)
-#         self._rules[payment_mode.import_rule](self, record, payment_mode)
+        :returns: True if the sale order should be imported
+        :rtype: boolean
+        """
+        print("check")
+        pos_payment_method = record["payment_method"]
+        mode_binder = self.binder_for("account.payment.mode")
+        payment_mode = mode_binder.to_internal(pos_payment_method)
+        print("payment_mode",payment_mode)
+        if not payment_mode:
+            raise FailedJobError(
+                _(
+                    "The configuration is missing for the Payment Mode '%s'.\n\n"
+                    "Resolution:\n"
+                    " - Use the automatic import in 'Connectors > Pos "
+                    "Backends', button 'Import payment modes', or:\n"
+                    "\n"
+                    "- Go to 'Invoicing > Configuration > Management "
+                    "> Payment Modes'\n"
+                    "- Create a new Payment Mode with name '%s'\n"
+                    "-Eventually  link the Payment Method to an existing Workflow "
+                    "Process or create a new one."
+                )
+                % (pos_payment_method, pos_payment_method)
+            )
+        self._rule_global(record, payment_mode)
+        self._rule_state(record, payment_mode)
+        self._rules[payment_mode.import_rule](self, record, payment_mode)
 
-#     def _rule_global(self, record, mode):
-#         """Rule always executed, whichever is the selected rule"""
-#         order_id = record["id"]
-#         max_days = mode.days_before_cancel
-#         if not max_days:
-#             return
-#         if self._get_paid_amount(record) != 0.0:
-#             return
+    def _rule_global(self, record, mode):
+        """Rule always executed, whichever is the selected rule"""
+        order_id = record["id"]
+        max_days = mode.days_before_cancel
+        if not max_days:
+            return
+        if self._get_paid_amount(record) != 0.0:
+            return
     
-#         order_date = datetime.strptime(record["date_add"], DATE_FORMAT)
-#         if order_date + timedelta(days=max_days) < datetime.now():
-#             raise NothingToDoJob(
-#                 "Import of the order %s canceled "
-#                 "because it has not been paid since %d "
-#                 "days" % (order_id, max_days)
-#             )
+        order_date = datetime.strptime(record["date_add"], DATE_FORMAT)
+        if order_date + timedelta(days=max_days) < datetime.now():
+            raise NothingToDoJob(
+                "Import of the order %s canceled "
+                "because it has not been paid since %d "
+                "days" % (order_id, max_days)
+            )
         
-#     def _mapping_state(self, state):
-#         state_mappings = {
-#             "processing": "quotation",
-#             "done": "done"
-#         }
-#         return state_mappings.get(state, state)
+    def _mapping_state(self, state):
+        state_mappings = {
+            "processing": "quotation",
+            "done": "done"
+        }
+        return state_mappings.get(state, state)
 
 
-#     def _rule_state(self, record, mode):
-#         """Check if order is importable by its state.
+    def _rule_state(self, record, mode):
+        """Check if order is importable by its state.
 
-#         If `backend_record.importable_order_state_ids` is valued
-#         we check if current order is in the list.
-#         If not, the job fails gracefully.
-#         """
-#         if self.backend_record.importable_order_state_ids:
-#             pos_state_id = record["id"]
-#             state = self.binder_for("pos.sale.order.state").to_internal(
-#                 pos_state_id, unwrap=1
-#             )
-#             if not state:
-#                 raise FailedJobError(
-#                     _(
-#                         "The configuration is missing "
-#                         "for sale order state with POS ID=%s.\n\n"
-#                         "Resolution:\n"
-#                         " - Use the automatic import in 'Connectors > Pos "
-#                         "Backends', button 'Synchronize base data'."
-#                     )
-#                     % (pos_state_id,)
-#                 )
-#             if state not in self.backend_record.importable_order_state_ids:
-#                 raise NothingToDoJob(
-#                     _(
-#                         "Import of the order with POS ID=%s canceled "
-#                         "because its state is not importable"
-#                     )
-#                     % record["id"]
-#                 )
+        If `backend_record.importable_order_state_ids` is valued
+        we check if current order is in the list.
+        If not, the job fails gracefully.
+        """
+        if self.backend_record.importable_order_state_ids:
+            pos_state_id = record["id"]
+            state = self.binder_for("pos.sale.order.state").to_internal(
+                pos_state_id, unwrap=1
+            )
+            if not state:
+                raise FailedJobError(
+                    _(
+                        "The configuration is missing "
+                        "for sale order state with POS ID=%s.\n\n"
+                        "Resolution:\n"
+                        " - Use the automatic import in 'Connectors > Pos "
+                        "Backends', button 'Synchronize base data'."
+                    )
+                    % (pos_state_id,)
+                )
+            if state not in self.backend_record.importable_order_state_ids:
+                raise NothingToDoJob(
+                    _(
+                        "Import of the order with POS ID=%s canceled "
+                        "because its state is not importable"
+                    )
+                    % record["id"]
+                )
 
 
 class SaleOrderImportMapper(Component):
@@ -701,12 +701,12 @@ class SaleOrderLineMapper(Component):
     _inherit = "pos.import.mapper"
     _apply_on = "pos.sale.order.line"
 
-    # direct = [
-    #     ("product_name", "name"),
-    #     ("id", "sequence"),
-    #     ("product_quantity", "product_uom_qty"),
-    #     ("reduction_percent", "discount"),
-    # ]
+    direct = [
+        # ("product_name", "name"),
+        # ("id", "sequence"),
+        ("quantity", "product_uom_qty"),
+        # ("reduction_percent", "discount"),
+    ]
 
     @mapping
     def product_name(self, record):
@@ -907,8 +907,7 @@ class SaleOrderLineMapper(Component):
         #     "product_uom": product and product.uom_id.id,
         # }
         return {
-            "product_id": record["product_id"],
-            "product_uom": record["quantity"],
+            "product_id": record["product_id"]
         }
 
     def _find_tax(self, pos_tax_id):
