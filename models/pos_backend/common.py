@@ -456,16 +456,11 @@ class PosBackend(models.Model):
         :return: True if the import process is completed successfully.
         :rtype: bool
         """
-        now_fmt = fields.Datetime.now()
         for backend_record in self:
-            since_date = backend_record.import_payment_mode_since
-            filters = {}
-            if since_date:
-                filters = {"date": "1", "filter[date_upd]": ">[%s]" % (since_date)}
-            with backend_record.work_on("account.payment.mode") as work:
-                importer = work.component(usage="batch.importer")
-                importer.run(filters=filters)
-            backend_record.import_payment_mode_since = now_fmt
+            since_date = backend_record.import_payment_modes_since
+            backend_record.env["pos.payment.mode"].with_delay().import_payment_modes_since(
+                backend_record, since_date
+            )
         return True
 
     @api.model

@@ -15,3 +15,4 @@ managerpos__import_stock_available,managerpos__import_stock_available,model_pos_
 pos_sale_order,pos_sale_order,model_pos_sale_order,base.group_user,1,1,1,1
 pos_sale_order_line,pos_sale_order_line,model_pos_sale_order_line,base.group_user,1,1,1,1
 pos_account_tax,pos_account_tax,model_pos_account_tax,base.group_user,1,1,1,1
+pos_payment_mode,pos_payment_mode,model_pos_payment_mode,base.group_user,1,1,1,1
