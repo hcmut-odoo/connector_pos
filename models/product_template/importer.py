@@ -52,6 +52,10 @@ class TemplateMapper(Component):
     ]
 
     @mapping
+    def invoice_policy(self, record):
+        return {"invoice_policy": "order"}
+
+    @mapping
     def standard_price(self, record):
         if self.has_variants(record):
             return {}
@@ -345,7 +349,7 @@ class TemplateMapper(Component):
 
 class ImportInventory(models.TransientModel):
     # In actual connector version is mandatory use a model
-    _name = "_import_stock_available"
+    _name = "pos._import_stock_available"
     _description = "Dummy Import Inventory Transient model"
 
     @api.model
@@ -356,10 +360,32 @@ class ImportInventory(models.TransientModel):
             return importer.run(pos_id, record=record, **kwargs)
 
 
+class ImportInventoryBinder(Component):
+    _name = "pos._import_stock_available.binder"
+    _inherit = "pos.binder"
+    _apply_on = "pos._import_stock_available"
+
+    _model_name = "pos._import_stock_available"
+    _external_field = "name"
+
+    def to_internal(self, external_id, unwrap=False, company=None):
+        if company is None:
+            company = self.backend_record.company_id
+        bindings = self.model
+        
+        if not bindings:
+            return self.model.browse()
+        bindings.ensure_one()
+        return bindings
+
+    def bind(self, external_id, binding_id):
+        raise TypeError("%s cannot be synchronized" % self.model._name)
+
+
 class ProductInventoryBatchImporter(Component):
     _name = "pos._import_stock_available.batch.importer"
     _inherit = ["pos.delayed.batch.importer", "pos.adapter"]
-    _apply_on = "_import_stock_available"
+    _apply_on = "pos._import_stock_available"
 
     def run(self, filters=None, **kwargs):
         if filters is None:
@@ -375,13 +401,28 @@ class ProductInventoryBatchImporter(Component):
         for variant_id in records:
             variant_record = self.client.get("product_variant", variant_id, {'action': 'find'})
             self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
-
+        # print("start ProductInventoryBatchImporter _run_page")
+        # records = [1]
+        # record = {
+        #     "id": 1,
+        #     "product_id": 1,
+        #     "size": "big",
+        #     "color": None,
+        #     "extend_price": "46000.00",
+        #     "stock_qty": 61,
+        #     "deleted_at": None,
+        #     "created_at": "2023-10-16T16:06:17.000000Z",
+        #     "updated_at": "2023-10-16T16:06:17.000000Z"
+        #     }
+        # self._import_record(1, record=record, **kwargs)
+        # print("end ProductInventoryBatchImporter _run_page")
         return records
     
     def _import_record(self, record_id, record=None, **kwargs):
         """Delay the import of the records"""
         assert record
-        self.env["_import_stock_available"].with_delay().import_record(
+        print("ProductInventoryBatchImporter _import_record",record)
+        self.env["pos._import_stock_available"].with_delay().import_record(
             self.backend_record, record_id, record=record, **kwargs
         )
 
@@ -389,13 +430,14 @@ class ProductInventoryBatchImporter(Component):
 class ProductInventoryImporter(Component):
     _name = "pos._import_stock_available.importer"
     _inherit = ["pos.importer", "pos.adapter"]
-    _apply_on = "_import_stock_available"
+    _apply_on = "pos._import_stock_available"
 
     def _get_quantity(self, record):
         filters = {'action': 'find'}
         variant = self.client.get("product_variant", record["id"], filters).get("data")
 
         return int(variant["stock_qty"])
+        # return 61
 
     def _get_binding(self):
         record = self.pos_record
@@ -406,6 +448,7 @@ class ProductInventoryImporter(Component):
     def _import_dependencies(self):
         """Import the dependencies for the record"""
         record = self.pos_record
+        print("ProductInventoryImporter _import_dependencies", record)
         self._import_dependency(record["product_id"], "pos.product.template")
         if record["id"]:
             self._import_dependency(
