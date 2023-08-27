@@ -57,32 +57,6 @@ class SaleImportRule(Component):
                 "The order has not been paid.\nThe import will be retried later."
             )
 
-    def _get_paid_amount(self, record):
-        pos_order_id = record["id"]
-        
-        payment_adapter = self.component(
-            usage="backend.adapter", model_name="invoice"
-        )
-
-        pos_invoice_ids = payment_adapter.search({
-            'action': 'list', 
-            'filter': {
-                'order_id': { 
-                    'operator': 'eq', 
-                    'value': pos_order_id
-                }
-            }
-        })
-
-        pos_invoice_record = payment_adapter.get(pos_invoice_ids[0], options={
-            'action': 'find'
-        })
-        
-        paid_amount = 0.0
-        paid_amount += float(pos_invoice_record["total"])
-
-        return paid_amount
-
     _rules = {
         "always": _rule_always,
         "paid": _rule_paid,
@@ -98,87 +72,75 @@ class SaleImportRule(Component):
         :returns: True if the sale order should be imported
         :rtype: boolean
         """
-        print("check")
-        pos_payment_method = record["payment_method"]
-        mode_binder = self.binder_for("account.payment.mode")
-        payment_mode = mode_binder.to_internal(pos_payment_method)
-        print("payment_mode",payment_mode)
-        if not payment_mode:
-            raise FailedJobError(
-                _(
-                    "The configuration is missing for the Payment Mode '%s'.\n\n"
-                    "Resolution:\n"
-                    " - Use the automatic import in 'Connectors > Pos "
-                    "Backends', button 'Import payment modes', or:\n"
-                    "\n"
-                    "- Go to 'Invoicing > Configuration > Management "
-                    "> Payment Modes'\n"
-                    "- Create a new Payment Mode with name '%s'\n"
-                    "-Eventually  link the Payment Method to an existing Workflow "
-                    "Process or create a new one."
-                )
-                % (pos_payment_method, pos_payment_method)
-            )
-        self._rule_global(record, payment_mode)
-        self._rule_state(record, payment_mode)
-        self._rules[payment_mode.import_rule](self, record, payment_mode)
-
-    def _rule_global(self, record, mode):
-        """Rule always executed, whichever is the selected rule"""
-        order_id = record["id"]
-        max_days = mode.days_before_cancel
-        if not max_days:
-            return
-        if self._get_paid_amount(record) != 0.0:
-            return
+        print("check record", record)
+        # pos_payment_method = record["payment_method"]
+        # mode_binder = self.binder_for("account.payment.mode")
+        # payment_mode = mode_binder.to_internal(pos_payment_method)
+        # print("payment_mode",payment_mode)
+        # if not payment_mode:
+        #     raise FailedJobError(
+        #         _(
+        #             "The configuration is missing for the Payment Mode '%s'.\n\n"
+        #             "Resolution:\n"
+        #             " - Use the automatic import in 'Connectors > Pos "
+        #             "Backends', button 'Import payment modes', or:\n"
+        #             "\n"
+        #             "- Go to 'Invoicing > Configuration > Management "
+        #             "> Payment Modes'\n"
+        #             "- Create a new Payment Mode with name '%s'\n"
+        #             "-Eventually  link the Payment Method to an existing Workflow "
+        #             "Process or create a new one."
+        #         )
+        #         % (pos_payment_method, pos_payment_method)
+        #     )
+        # self._rule_global(record)
+        self._rule_state(record)
+        # self._rules[payment_mode.import_rule](self, record, payment_mode)
     
-        order_date = datetime.strptime(record["date_add"], DATE_FORMAT)
-        if order_date + timedelta(days=max_days) < datetime.now():
-            raise NothingToDoJob(
-                "Import of the order %s canceled "
-                "because it has not been paid since %d "
-                "days" % (order_id, max_days)
-            )
         
     def _mapping_state(self, state):
         state_mappings = {
-            "processing": "quotation",
-            "done": "done"
+            'processing': 'Quotation/Draft',
+            'done': 'Confirmed',
+            'cancel': 'Canceled'
         }
+
         return state_mappings.get(state, state)
 
 
-    def _rule_state(self, record, mode):
+    def _rule_state(self, record):
         """Check if order is importable by its state.
 
         If `backend_record.importable_order_state_ids` is valued
         we check if current order is in the list.
         If not, the job fails gracefully.
         """
-        if self.backend_record.importable_order_state_ids:
-            pos_state_id = record["id"]
-            state = self.binder_for("pos.sale.order.state").to_internal(
-                pos_state_id, unwrap=1
+        # if self.backend_record.importable_order_state_ids:
+        #     pos_state_id = record["id"]
+        #     state = self.binder_for("pos.sale.order.state").to_internal(
+        #         pos_state_id, unwrap=1
+        #     )
+        #     if not state:
+        #         raise FailedJobError(
+        #             _(
+        #                 "The configuration is missing "
+        #                 "for sale order state with POS ID=%s.\n\n"
+        #                 "Resolution:\n"
+        #                 " - Use the automatic import in 'Connectors > Pos "
+        #                 "Backends', button 'Synchronize base data'."
+        #             )
+        #             % (pos_state_id,)
+        #         )
+        state = record["status"]
+        if state == "processing" or state == "cancel":
+        # if state not in self.backend_record.importable_order_state_ids:
+            raise NothingToDoJob(
+                _(
+                    "Import of the order with POS ID=%s canceled "
+                    "because its state is not importable"
+                )
+                % record["id"]
             )
-            if not state:
-                raise FailedJobError(
-                    _(
-                        "The configuration is missing "
-                        "for sale order state with POS ID=%s.\n\n"
-                        "Resolution:\n"
-                        " - Use the automatic import in 'Connectors > Pos "
-                        "Backends', button 'Synchronize base data'."
-                    )
-                    % (pos_state_id,)
-                )
-            if state not in self.backend_record.importable_order_state_ids:
-                raise NothingToDoJob(
-                    _(
-                        "Import of the order with POS ID=%s canceled "
-                        "because its state is not importable"
-                    )
-                    % record["id"]
-                )
 
 
 class SaleOrderImportMapper(Component):
@@ -338,7 +300,7 @@ class SaleOrderImportMapper(Component):
 
     @mapping
     def name(self, record):
-        basename = record["delivery_name"]
+        basename = record["order_transaction"]
         if not self._sale_order_exists(basename):
             return {"name": basename}
         i = 1
@@ -549,54 +511,61 @@ class SaleOrderImporter(Component):
         #     self._import_dependency(pos_carrier_id, "pos.delivery.carrier")
 
         # Order item ids
-        pos_order_item_ids = self.client.search('order_item', options={
-            'action': 'list', 
-            'filter': {
-                'order_id': { 
-                    'operator': 'eq', 
-                    'value': pos_order_id
-                }
-            }
-        })
+        # pos_order_item_ids = self.client.search('order_item', options={
+        #     'action': 'list', 
+        #     'filter': {
+        #         'order_id': { 
+        #             'operator': 'eq', 
+        #             'value': pos_order_id
+        #         }
+        #     }
+        # })
 
         # Get cart item id and add to list
-        pos_cart_item_ids = []
-        print("pos_order_item_ids",pos_order_item_ids)
-        for pos_order_item_id in pos_order_item_ids:
-            pos_order_item_record = self.client.get("order_item", pos_order_item_id, {'action': 'find'})["data"][0]
-            # pos_order_item_record -> pos_order_item_record["data"]
-            print("pos_order_item_record", pos_order_item_record)
-            pos_cart_item_id = pos_order_item_record["cart_item_id"]
+        # pos_cart_item_ids = []
+        # print("pos_order_item_ids",pos_order_item_ids)
+        # for pos_order_item_id in pos_order_item_ids:
+        #     pos_order_item_record = self.client.get("order_item", pos_order_item_id, {'action': 'find'})["data"][0]
+        #     # pos_order_item_record -> pos_order_item_record["data"]
+        #     print("pos_order_item_record", pos_order_item_record)
+        #     pos_cart_item_id = pos_order_item_record["cart_item_id"]
 
-            pos_cart_item_ids.append(pos_cart_item_id)
+        #     pos_cart_item_ids.append(pos_cart_item_id)
 
         # Get cart product and variant id and add to list
-        print("pos_cart_item_ids",pos_cart_item_ids)
+        # print("pos_cart_item_ids",pos_cart_item_ids)
         pos_product_and_variant_tuples = []
         # for pos_cart_item_id in pos_cart_item_ids:
-        for pos_cart_item_id in pos_order_item_ids:
-            # fine -> find
-            # pos_cart_item_record = self.client.get("cart_item", pos_cart_item_id, {'action': 'find'})
-            pos_cart_item_record = self.client.get("order_item", pos_cart_item_id, {'action': 'find'})["data"][0]
-            print("pos_cart_item_record",pos_cart_item_record)
-            pos_product_id = pos_cart_item_record["product_id"]
-            pos_product_variant_id = pos_cart_item_record["product_variant_id"]
+        # for pos_cart_item_id in pos_order_item_ids:
+        #     # fine -> find
+        #     # pos_cart_item_record = self.client.get("cart_item", pos_cart_item_id, {'action': 'find'})
+        #     pos_cart_item_record = self.client.get("order_item", pos_cart_item_id, {'action': 'find'})["data"][0]
+        #     print("pos_cart_item_record",pos_cart_item_record)
+        #     pos_product_id = pos_cart_item_record["product_id"]
+        #     pos_product_variant_id = pos_cart_item_record["product_variant_id"]
 
-            pos_product_and_variant_tuples.append((pos_product_id, pos_product_variant_id))
+        #     pos_product_and_variant_tuples.append((pos_product_id, pos_product_variant_id))
+        
+        order_rows = record.get("order_rows")
+        for order_row in order_rows:
+            pos_product_template_id = order_row.get("product")["id"]
+            pos_product_variant_id = order_row.get("product")["variant_id"]
+
+            pos_product_and_variant_tuples.append((pos_product_template_id, pos_product_variant_id))
 
         for pos_product_and_variant_tuple in pos_product_and_variant_tuples:
-            pos_product_id = pos_product_and_variant_tuple[0]
+            pos_product_template_id = pos_product_and_variant_tuple[0]
             pos_product_variant_id = pos_product_and_variant_tuple[1]
 
             try:
                 self._import_dependency(
-                    pos_product_id, "pos.product.template"
+                    pos_product_template_id, "pos.product.template"
                 )
             except PosWebServiceError as err:
                 # we ignore it, the order line will be imported without product
                 _logger.error(
                     "Pos product %s could not be imported, error: %s",
-                    pos_product_id,
+                    pos_product_template_id,
                     err,
                 )
                 self.line_template_errors.append(pos_product_and_variant_tuple)
@@ -680,14 +649,14 @@ class SaleOrderImporter(Component):
         """Return True if the import can be skipped"""
         if binding:
             return True
-        # rules = self.component(usage="sale.import.rule")
-        # try:
-        #     return rules.check(self.pos_record)
-        # except NothingToDoJob as err:
-        #     # we don't let the NothingToDoJob exception let go out, because if
-        #     # we are in a cascaded import, it would stop the whole
-        #     # synchronization and set the whole job to done
-        #     return str(err)
+        rules = self.component(usage="sale.import.rule")
+        try:
+            return rules.check(self.pos_record)
+        except NothingToDoJob as err:
+            # we don't let the NothingToDoJob exception let go out, because if
+            # we are in a cascaded import, it would stop the whole
+            # synchronization and set the whole job to done
+            return str(err)
 
 
 class SaleOrderBatchImporter(Component):
@@ -711,7 +680,7 @@ class SaleOrderLineMapper(Component):
     @mapping
     def product_name(self, record):
         # pos_order_id = record["id"]
-        # print("product_name record", record)
+        print("product_name record", record)
         # # Order item ids
         # pos_order_item_ids = self.client.search('order_item', options={
         #     'action': 'list', 
