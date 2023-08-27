@@ -11,6 +11,7 @@ pos_product_variant,pos_product_variant,model_pos_product_variant,base.group_use
 pos_product_image,pos_product_image,model_pos_product_image,base.group_user,1,1,1,1
 pos_product_variant_option,pos_product_variant_option,model_pos_product_variant_option,base.group_user,1,1,1,1
 pos__import_stock_available,pos__import_stock_available,model_pos__import_stock_available,base.group_user,1,1,1,1
+managerpos__import_stock_available,managerpos__import_stock_available,model_pos__import_stock_available,connector.group_connector_manager,1,1,1,1
 pos_sale_order,pos_sale_order,model_pos_sale_order,base.group_user,1,1,1,1
 pos_sale_order_line,pos_sale_order_line,model_pos_sale_order_line,base.group_user,1,1,1,1
 pos_account_tax,pos_account_tax,model_pos_account_tax,base.group_user,1,1,1,1

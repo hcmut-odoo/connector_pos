@@ -16,7 +16,7 @@ except ImportError:
 
 class ProductCombinationImporter(Component):
     _name = "pos.product.variant.importer"
-    _inherit = "pos.importer"
+    _inherit = ["pos.importer","pos.adapter"]
     _apply_on = "pos.product.variant"
 
     def template_attribute_lines(self, option_values): # Not run
@@ -91,8 +91,9 @@ class ProductCombinationImporter(Component):
         if not hasattr(self.work, "parent_pos_record"):
             tmpl_adapter = self.component(
                 usage="backend.adapter", model_name="pos.product.template"
-            )
-            tmpl_record = tmpl_adapter.read(self.pos_record.get("product_id"))
+            )   
+            tmpl_record = tmpl_adapter.read(self.pos_record["product_id"], {'action': 'find'})
+            print("ProductCombinationImporter _import record", tmpl_record)
             self.work.parent_pos_record = tmpl_record
             if "parent_pos_record" not in self.work._propagate_kwargs:
                 self.work._propagate_kwargs.append("parent_pos_record")
@@ -161,6 +162,7 @@ class ProductCombinationMapper(Component):
         return template_binder.to_internal(record["product_id"])
 
     def _get_option_value(self, record):
+        print("ProductCombinationMapper _get_option_value record", record)
         option_values = [{"id": record["id"]}]
         template_binding = self.get_main_template_binding(record)
         template = template_binding.odoo_id
