@@ -52,6 +52,10 @@ class TemplateMapper(Component):
     ]
 
     @mapping
+    def invoice_policy(self, record):
+        return {"invoice_policy": "order"}
+
+    @mapping
     def standard_price(self, record):
         if self.has_variants(record):
             return {}
