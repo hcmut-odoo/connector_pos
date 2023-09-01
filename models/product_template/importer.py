@@ -566,8 +566,9 @@ class ProductTemplateImporter(Component):
             attr_line = template.with_context(
                 active_test=False
             ).attribute_line_ids.filtered(lambda l: l.attribute_id.id == attr_id)
+            print('attr_line', attr_line)
             if attr_line:
-                attr_line.write({"value_ids": [(6, 0, value_ids)], "active": True})
+                # attr_line.write({"value_ids": [(6, 0, value_ids)], "active": True})
                 remaining_attr_lines -= attr_line
             else:
                 attr_line = self.env["product.template.attribute.line"].create(
