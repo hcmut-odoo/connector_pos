@@ -37,13 +37,11 @@ class SaleImportRule(Component):
     _usage = "sale.import.rule"
 
     def _rule_always(self, record, mode):
-        print("_rule_always")
         """Always import the order"""
         return True
 
     def _rule_never(self, record, mode):
         """Never import the order"""
-        print("_rule_never")
         raise NothingToDoJob(
             "Orders with payment modes %s "
             "are never imported." % record["payment_method"]
@@ -51,7 +49,6 @@ class SaleImportRule(Component):
 
     def _rule_paid(self, record, mode):
         """Import the order only if it has received a payment"""
-        print("_rule_paid")
         if self._get_paid_amount(record) == 0.0:
             raise OrderImportRuleRetry(
                 "The order has not been paid.\nThe import will be retried later."
@@ -72,30 +69,8 @@ class SaleImportRule(Component):
         :returns: True if the sale order should be imported
         :rtype: boolean
         """
-        print("check record", record)
-        # pos_payment_method = record["payment_method"]
-        # mode_binder = self.binder_for("account.payment.mode")
-        # payment_mode = mode_binder.to_internal(pos_payment_method)
-        # print("payment_mode",payment_mode)
-        # if not payment_mode:
-        #     raise FailedJobError(
-        #         _(
-        #             "The configuration is missing for the Payment Mode '%s'.\n\n"
-        #             "Resolution:\n"
-        #             " - Use the automatic import in 'Connectors > Pos "
-        #             "Backends', button 'Import payment modes', or:\n"
-        #             "\n"
-        #             "- Go to 'Invoicing > Configuration > Management "
-        #             "> Payment Modes'\n"
-        #             "- Create a new Payment Mode with name '%s'\n"
-        #             "-Eventually  link the Payment Method to an existing Workflow "
-        #             "Process or create a new one."
-        #         )
-        #         % (pos_payment_method, pos_payment_method)
-        #     )
-        # self._rule_global(record)
+
         self._rule_state(record)
-        # self._rules[payment_mode.import_rule](self, record, payment_mode)
     
     
         
@@ -169,42 +144,20 @@ class SaleOrderImportMapper(Component):
     ]
 
     def _get_sale_order_lines(self, record):
-        print("_get_sale_order_lines", record)
-        # orders = self.client.get("order_item", record["id"], {'action': 'find'})["data"]
-        # print("_get_sale_order_lines orders", orders)
         orders = record.get("order_rows")
         if isinstance(orders, dict):
             return [orders]
         return orders
-
-    # def _get_discounts_lines(self, record):
-    #     print("_get_discounts_lines")
-    #     if record["total_discounts"] == "0.00":
-    #         return []
-    #     adapter = self.component(
-    #         usage="backend.adapter", model_name="pos.sale.order.line.discount"
-    #     )
-    #     discount_ids = adapter.search({"filter[id_order]": record["id"]})
-    #     discount_mappers = []
-    #     for discount_id in discount_ids:
-    #         discount_mappers.append({"id": discount_id})
-    #     return discount_mappers
 
     children = [
         (
             _get_sale_order_lines,
             "pos_order_line_ids",
             "pos.sale.order.line",
-        ),
-        # (
-        #     _get_discounts_lines,
-        #     "pos_discount_line_ids",
-        #     "pos.sale.order.line.discount",
-        # ),
+        )
     ]
 
     def _map_child(self, map_record, from_attr, to_attr, model_name):
-        print("_map_child")
         source = map_record.source
         # TODO patch ImportMapper in connector to support callable
         if callable(from_attr):
@@ -213,19 +166,13 @@ class SaleOrderImportMapper(Component):
             child_records = source[from_attr]
 
         children = []
-        print("child_records", child_records)
         for child_record in child_records:
-            # adapter = self.component(usage="backend.adapter", model_name=model_name)
-            # child is enounh, not need to change
-            # print("child_records adapter", adapter)
-            # detail_record = adapter.read(child_record["order_id"],{'action': 'find'})
-            # print("child_records detail_record",detail_record)
-
             mapper = self._get_map_child_component(model_name)
             items = mapper.get_items(
                 [child_record], map_record, to_attr, options=self.options
             )
             children.extend(items)
+
         return children
 
     def _sale_order_exists(self, name):
@@ -238,19 +185,12 @@ class SaleOrderImportMapper(Component):
         )
         return len(sale_order) == 1
 
-    direct = [
-        # ("order_id", "order_id"),
-        # ("delivery_number", "pos_delivery_number"),
-        # ("total", "total"),
-        # ("total_shipping_tax_incl", "total_shipping_tax_included"),
-        # ("total_shipping_tax_excl", "total_shipping_tax_excluded"),
-    ]
+    direct = []
 
 
 
     @mapping
     def invoice_number(self, record):
-        print("invoice_number",record)
         pos_order_id = record["id"]
         pos_invoice_ids = self.client.search('invoice', options={
             'filter': {
@@ -264,16 +204,12 @@ class SaleOrderImportMapper(Component):
         # Assign to class scope
         if pos_invoice_ids[0]:
             self.pos_invoice_id = pos_invoice_ids[0]
-        print("self.pos_invoice_id",self.pos_invoice_id)
+
         return {"pos_invoice_number":self.pos_invoice_id}
-    
-    # @mapping
-    # def order_id(self, record):        
-    #     return {"order_id":record["id"]}
+
 
     @mapping
     def total_paid(self, record):
-        print("total_paid",record)
         pos_order_id = record["id"]
         pos_invoice_ids = self.client.search('invoice', options={
             'filter': {
@@ -284,10 +220,9 @@ class SaleOrderImportMapper(Component):
             }
         })
 
-        # pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})
         pos_invoice_record = self.client.find("invoice", pos_invoice_ids[0])
         self.pos_invoice_record = pos_invoice_record
-        print("pos_invoice_record",pos_invoice_record)
+
         return {"total_amount":pos_invoice_record["total"]}
 
     @mapping
@@ -312,66 +247,9 @@ class SaleOrderImportMapper(Component):
         partner = binder.to_internal(record["user_id"], unwrap=True)
         return {"partner_id": partner.id}
 
-    # @mapping
-    # def partner_invoice_id(self, record):
-    #     binder = self.binder_for("pos.address")
-
-    #     pos_order_id = record["id"]
-    #     pos_invoice_ids = self.client.search('invoice', options={
-    #         'action': 'list', 
-    #         'filter': {
-    #             'order_id': { 
-    #                 'operator': 'eq', 
-    #                 'value': pos_order_id
-    #             }
-    #         }
-    #     })
-
-    #     pos_invoice_id = pos_invoice_ids[0]
-    #     address = binder.to_internal(pos_invoice_id, unwrap=True)
-
-    #     return {"partner_invoice_id": address.id}
-
-    # @mapping
-    # def partner_shipping_id(self, record):
-    #     binder = self.binder_for("pos.address")
-    #     pos_address_delivery_id = record["id"]
-    #     shipping = binder.to_internal(pos_address_delivery_id, unwrap=True)
-
-    #     return {"partner_shipping_id": shipping.id}
-
-    # @mapping
-    # def pricelist_id(self, record):
-    #     return {"pricelist_id": self.backend_record.pricelist_id.id}
-
-    # @mapping
-    # def sale_team(self, record):
-    #     if self.backend_record.sale_team_id:
-    #         return {"team_id": self.backend_record.sale_team_id.id}
-
     @mapping
     def backend_id(self, record):
         return {"backend_id": self.backend_record.id}
-
-    # @mapping
-    # def payment(self, record):
-    #     binder = self.binder_for("account.payment.mode")
-    #     mode = binder.to_internal(record["payment_method"])
-    #     assert mode, (
-    #         "import of error fail in SaleImportRule.check "
-    #         "when the payment mode is missing"
-    #     )
-    #     return {"payment_mode_id": mode.id}
-
-    # @mapping
-    # def carrier_id(self, record):
-    #     pos_carrier_id = record["id"]
-    #     if not pos_carrier_id:
-    #         return {}
-        
-    #     binder = self.binder_for("pos.delivery.carrier")
-    #     carrier = binder.to_internal(pos_carrier_id, unwrap=True)
-    #     return {"carrier_id": carrier.id}
 
     @mapping
     def total_tax_amount(self, record):
@@ -470,14 +348,7 @@ class SaleOrderImporter(Component):
 
     def _import_dependencies(self):        
         record = self.pos_record
-        print("_import_dependencies", record)
         pos_customer_id = record["user_id"]
-        pos_order_id = record["id"]
-        
-        # Assign to order Id
-        # pos_address_invoice_id = record["id"]
-        # pos_address_delivery_id = record["id"]
-        # pos_carrier_id = record["id"]
 
         self._import_dependency(
             pos_customer_id,
@@ -485,64 +356,9 @@ class SaleOrderImporter(Component):
             address_type="contact",
         )
 
-        # if pos_address_invoice_id != pos_address_delivery_id:
-        #     self._import_dependency(
-        #         pos_address_invoice_id,
-        #         "pos.address",
-        #         address_type="invoice",
-        #     )
-
-        # self._import_dependency(
-        #     pos_address_delivery_id,
-        #     "pos.address",
-        #     # it is important to be sure that delivery address is updated
-        #     # else there is a chance to send it to an old address
-        #     # it is not rare that the customer changes an existing address
-        #     # at the same time he orders.
-        #     always=True,
-        #     address_type="delivery",
-        # )
-
-        # if pos_carrier_id != "0":
-        #     self._import_dependency(pos_carrier_id, "pos.delivery.carrier")
-
-        # Order item ids
-        # pos_order_item_ids = self.client.search('order_item', options={
-        #     'action': 'list', 
-        #     'filter': {
-        #         'order_id': { 
-        #             'operator': 'eq', 
-        #             'value': pos_order_id
-        #         }
-        #     }
-        # })
-
-        # Get cart item id and add to list
-        # pos_cart_item_ids = []
-        # print("pos_order_item_ids",pos_order_item_ids)
-        # for pos_order_item_id in pos_order_item_ids:
-        #     pos_order_item_record = self.client.get("order_item", pos_order_item_id, {'action': 'find'})["data"][0]
-        #     # pos_order_item_record -> pos_order_item_record["data"]
-        #     print("pos_order_item_record", pos_order_item_record)
-        #     pos_cart_item_id = pos_order_item_record["cart_item_id"]
-
-        #     pos_cart_item_ids.append(pos_cart_item_id)
-
-        # Get cart product and variant id and add to list
-        # print("pos_cart_item_ids",pos_cart_item_ids)
         pos_product_and_variant_tuples = []
-        # for pos_cart_item_id in pos_cart_item_ids:
-        # for pos_cart_item_id in pos_order_item_ids:
-        #     # fine -> find
-        #     # pos_cart_item_record = self.client.get("cart_item", pos_cart_item_id, {'action': 'find'})
-        #     pos_cart_item_record = self.client.get("order_item", pos_cart_item_id, {'action': 'find'})["data"][0]
-        #     print("pos_cart_item_record",pos_cart_item_record)
-        #     pos_product_id = pos_cart_item_record["product_id"]
-        #     pos_product_variant_id = pos_cart_item_record["product_variant_id"]
-
-        #     pos_product_and_variant_tuples.append((pos_product_id, pos_product_variant_id))
-        
         order_rows = record.get("order_rows")
+
         for order_row in order_rows:
             pos_product_template_id = order_row.get("product")["id"]
             pos_product_variant_id = order_row.get("product")["variant_id"]
@@ -596,36 +412,6 @@ class SaleOrderImporter(Component):
         binding.odoo_id.recompute()
 
     def _create(self, data):
-        print("sale_order _create", data)
-        # pos_data_should_be = {
-        #     "order_id": 1,
-        #     "total": "129000.00",
-        #     "backend_id": 1,
-        #     "invoice_number": 1,
-        #     "name": "Dien Ha",
-        #     "partner_id": 67,
-        #     "total_paid": "129000.00",
-        #     "total_amount_tax": 12900,
-        #     "pos_order_line_ids": [],
-        #     "partner_invoice_id": 67,
-        #     "partner_shipping_id": 67,
-        #     "pricelist_id": 1,
-        #     "fiscal_position_id": "",
-        #     "workflow_process_id": ""
-        #     }
-        # pos_data_current = {
-        #     "pos_invoice_number": data["invoice_number"],
-        #     "total_amount": data["total_paid"],
-        #     "backend_id": data["backend_id"],
-        #     "name": data["name"],
-        #     "partner_id": data["partner_id"],
-        #     "partner_invoice_id": data["partner_invoice_id"],
-        #     "partner_shipping_id": data["partner_shipping_id"],
-        #     "pos_order_line_ids": data["pos_order_line_ids"],
-        #     "fiscal_position_id": data["fiscal_position_id"],
-        #     "workflow_process_id": data["workflow_process_id"]
-        # }
-
         binding = super()._create(data)
         if binding.fiscal_position_id:
             binding.odoo_id._compute_tax_id()
@@ -667,10 +453,8 @@ class SaleOrderLineMapper(Component):
     _apply_on = "pos.sale.order.line"
 
     direct = [
-        # ("name", "name"),
         ("id", "sequence"),
         ("quantity", "product_uom_qty"),
-        # ("reduction_percent", "discount"),
     ]
 
     @mapping
@@ -679,27 +463,22 @@ class SaleOrderLineMapper(Component):
 
     @mapping
     def pos_id(self, record):
-        print("pos_id record", record)
         return {"pos_id": record["id"]}
 
     @mapping
     def price_unit(self, record):
-        print("price_unit record", record)
         product = record.get("product")
-        variant = product.get("variant")    
+        variant = product.get("variant")  
+  
         return {"price_unit": variant["extend_price"]}
 
     @mapping
     def product_id(self, record):
-        print("sale_order product_id", record)
         binder = self.binder_for("pos.product.template")
         template = binder.to_internal(record["product"]["id"], unwrap=True)
         product = self.env["product.product"].search(
             [
-                ("product_tmpl_id", "=", template.id),
-                # "|",
-                # ("company_id", "=", self.backend_record.company_id.id),
-                # ("company_id", "=", False),
+                ("product_tmpl_id", "=", template.id)
             ],
             limit=1,
         )
@@ -720,8 +499,8 @@ class SaleOrderLineMapper(Component):
             taxes = [taxes]
         result = self.env["account.tax"].browse()
         for pos_tax in taxes:
-            print("tax_id pos_tax", pos_tax)
             result |= self._find_tax(pos_tax)
+
         return {"tax_id": [(6, 0, result.ids)]}
 
     @mapping

@@ -79,8 +79,6 @@ class PosImporter(AbstractComponent):
         """
         Return the raw Pos data for `self.pos_id`.
         """
-        data = self.backend_adapter.read(self.pos_id)
-        print('_get_pos_data', self.pos_id, data)
         return self.backend_adapter.read(self.pos_id)
 
 
@@ -393,7 +391,6 @@ class BatchImporter(AbstractComponent):
         :type filters: dict or None
         :param kwargs: Additional keyword arguments.
         """
-        print("1st run")
         if filters is None:
             filters = {}
         if "limit" in filters:
@@ -425,14 +422,11 @@ class BatchImporter(AbstractComponent):
         :return: The list of record IDs processed in this page.
         :rtype: list
         """
-        print("access _run_page")
-        print("filter _run_page", filters)
         record_ids = self.backend_adapter.search(filters)
-        print("record_ids", record_ids)
+
         for record_id in record_ids:
-            print("1st _run_page")
             self._import_record(record_id, **kwargs)
-        print("end _run_page")
+
         return record_ids
 
     def _import_record(self, record):
