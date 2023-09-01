@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- poserpconnect for Odoo Copyright (C) 2012 Akretion Benoît Guillot
+    <benoit.guillot@akretion.com> The licence is in the file __openerp__.py -->
 <odoo>
 
     <menuitem
@@ -18,6 +20,22 @@
     />
 
     <!-- <menuitem
+        id="menu_pos_shop_group"
+        name="Websites"
+        parent="menu_pos_root"
+        sequence="20"
+        action="action_pos_shop_group"
+    /> -->
+
+    <!-- <menuitem
+        id="menu_pos_shop"
+        name="Stores"
+        parent="menu_pos_root"
+        sequence="30"
+        action="action_pos_shop"
+    /> -->
+
+    <!-- <menuitem
         id="menu_pos_carrier"
         name="Carriers"
         parent="menu_pos_root"
@@ -25,17 +43,44 @@
         action="action_pos_carrier"
     /> -->
 
-    <!-- <record id="action_pos_attributes" model="ir.actions.act_window">
+
+
+    <record id="action_pos_attributes" model="ir.actions.act_window">
         <field name="name">Pos Options / Attributes</field>
-        <field name="res_model">pos.product.product</field>
+        <field name="res_model">pos.product.variant.option</field>
         <field name="view_mode">tree,form</field>
-    </record> -->
+    </record>
+
+    <record id="action_pos_values" model="ir.actions.act_window">
+        <field name="name">Pos Options/Attribute Values</field>
+        <field name="res_model">pos.product.variant.option.value</field>
+        <field name="view_mode">tree,form</field>
+    </record>
 
     <record id="action_pos_categories" model="ir.actions.act_window">
         <field name="name">Odoo product Categories</field>
         <field name="res_model">pos.product.category</field>
         <field name="view_mode">tree,form</field>
     </record>
+
+
+    <record id="action_pos_products" model="ir.actions.act_window">
+        <field name="name">Pos Product Variant</field>
+        <field name="res_model">pos.product.variant</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    
+    <record id="action_pos_product_templates" model="ir.actions.act_window">
+        <field name="name">Odoo Product Templates</field>
+        <field name="res_model">pos.product.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- <record id="action_pos_res_langs" model="ir.actions.act_window">
+        <field name="name">Languages</field>
+        <field name="res_model">pos.res.lang</field>
+        <field name="view_mode">tree,form</field>
+    </record> -->
 
     <!-- TODO: Implement security strategy groups="odoo_base.group_oc_manager" -->
     <menuitem
@@ -45,28 +90,43 @@
         sequence="100"
     />
 
+    <!-- <menuitem id="menu_pos_external_uom" name="External UOM" parent="menu_pos_external_objects"
+        action="action_pos_uom" /> -->
+
     <!-- <menuitem
+        id="menu_pos_external_languauges"
+        name="External Languages"
+        parent="menu_pos_external_objects"
+        action="action_pos_res_langs"
+    /> -->
+    <menuitem
         id="menu_pos_external_attribute"
         name="External Attributes"
         parent="menu_pos_external_objects"
         action="action_pos_attributes"
-    /> -->
-    <!-- <menuitem
+    />
+    <menuitem
         id="menu_pos_external_values"
         name="External Attribute Values"
         parent="menu_pos_external_objects"
         action="action_pos_values"
-    /> -->
+    />
     <menuitem
         id="menu_pos_external_categories"
         name="External Categories"
         parent="menu_pos_external_objects"
         action="action_pos_categories"
     />
-    <!-- <menuitem
+    <menuitem
+        id="menu_pos_external_product_templates"
+        name="External Product Templates"
+        parent="menu_pos_external_objects"
+        action="action_pos_product_templates"
+    />
+    <menuitem
         id="menu_pos_external_products"
         name="External Products"
         parent="menu_pos_external_objects"
         action="action_pos_products"
-    /> -->
+    />
 </odoo>
