@@ -91,12 +91,14 @@ class ProductCombinationImporter(Component):
         if not hasattr(self.work, "parent_pos_record"):
             tmpl_adapter = self.component(
                 usage="backend.adapter", model_name="pos.product.template"
-            )   
+            )
+
             tmpl_record = tmpl_adapter.read(self.pos_record["product_id"])
-            print("ProductCombinationImporter _import record", tmpl_record)
             self.work.parent_pos_record = tmpl_record
+
             if "parent_pos_record" not in self.work._propagate_kwargs:
                 self.work._propagate_kwargs.append("parent_pos_record")
+
         return super()._import(binding, **kwargs)
 
 
@@ -162,22 +164,26 @@ class ProductCombinationMapper(Component):
         return template_binder.to_internal(record["product_id"])
 
     def _get_option_value(self, record):
-        print("ProductCombinationMapper _get_option_value record", record)
         option_values = [{"id": record["id"]}]
         template_binding = self.get_main_template_binding(record)
         template = template_binding.odoo_id
+
         if type(option_values) is dict:
             option_values = [option_values]
+        
         tmpl_values = template.attribute_line_ids.mapped("product_template_value_ids")
+        
         for option_value in option_values:
             option_value_binder = self.binder_for(
                 "pos.product.variant.option.value"
             )
+            
             option_value_binding = option_value_binder.to_internal(option_value["id"])
             tmpl_value = tmpl_values.filtered(
                 lambda v: v.product_attribute_value_id.id
                 == option_value_binding.odoo_id.id
             )
+            
             assert option_value_binding, "must have a binding for the option"
             yield tmpl_value
 

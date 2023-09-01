@@ -70,23 +70,15 @@ class PosSaleOrder(models.Model):
     def import_orders_since(self, backend, since_date=None, **kwargs):
         """Prepare the import of orders modified on Pos"""
         now_fmt = fields.Datetime.now()
-        print("1st import_orders_since")
-        print(since_date)
+
         if since_date:
             date = {"start": since_date}
         else:
             date = {"end": now_fmt}
+
         self.env["pos.sale.order"].import_batch(
             backend, filters={'date': date}, priority=5, max_retries=0
         )
-
-        # if since_date:
-        #     filters = {"date": "1", "filter[date_add]": ">[%s]" % since_date}
-
-        # self.env["pos.mail.message"].import_batch(backend, filters)
-
-        # substract a 10 second margin to avoid to miss an order if it is
-        # created in pos at the exact same time odoo is checking.
 
         next_check_datetime = now_fmt - timedelta(seconds=10)
         backend.import_orders_since = next_check_datetime
@@ -211,22 +203,6 @@ class SaleOrderAdapter(Component):
     _pos_model = "order"
     _export_node_name = "order"
 
-    # def update_sale_state(self, pos_id, datas):
-    #     return self.client.add("order_histories", datas)
-
-    # def search(self, filters=None):
-    #     result = super().search(filters=filters)
-    #     shop = self.env["pos.backend"].search(
-    #         [("backend_id", "=", self.backend_record.id)]
-    #     )
-
-    #     api = PosWebServiceDict(
-    #         shop.default_url, self.pos.webservice_key
-    #     )
-    #     result += api.search(self._pos_model, filters)
-
-    #     return result
-
 
 class SaleOrderLineAdapter(Component):
     _name = "pos.sale.order.line.adapter"
@@ -240,16 +216,6 @@ class OrderPaymentAdapter(Component):
     _inherit = "pos.adapter"
     _apply_on = "__not_exist_pos.payment"
     _pos_model = "order"
-
-
-# class OrderDiscountAdapter(Component):
-#     _name = "pos.sale.order.line.discount.adapter"
-#     _inherit = "pos.adapter"
-#     _apply_on = "pos.sale.order.line.discount"
-
-#     @property
-#     def _pos_model(self):
-#         return self.backend_record.get_version_ps_key("order_discounts")
 
 
 class PosSaleOrderListener(Component):

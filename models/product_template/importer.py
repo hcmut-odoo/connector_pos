@@ -401,27 +401,11 @@ class ProductInventoryBatchImporter(Component):
         for variant_id in records:
             variant_record = self.client.find("product_variant", variant_id)
             self._import_record(variant_id, record=variant_record, **kwargs)
-        # print("start ProductInventoryBatchImporter _run_page")
-        # records = [1]
-        # record = {
-        #     "id": 1,
-        #     "product_id": 1,
-        #     "size": "big",
-        #     "color": None,
-        #     "extend_price": "46000.00",
-        #     "stock_qty": 61,
-        #     "deleted_at": None,
-        #     "created_at": "2023-10-16T16:06:17.000000Z",
-        #     "updated_at": "2023-10-16T16:06:17.000000Z"
-        #     }
-        # self._import_record(1, record=record, **kwargs)
-        # print("end ProductInventoryBatchImporter _run_page")
         return records
     
     def _import_record(self, record_id, record=None, **kwargs):
         """Delay the import of the records"""
         assert record
-        print("ProductInventoryBatchImporter _import_record",record)
         self.env["pos._import_stock_available"].with_delay().import_record(
             self.backend_record, record_id, record=record, **kwargs
         )
@@ -447,7 +431,6 @@ class ProductInventoryImporter(Component):
     def _import_dependencies(self):
         """Import the dependencies for the record"""
         record = self.pos_record
-        print("ProductInventoryImporter _import_dependencies", record)
         self._import_dependency(record["product_id"], "pos.product.template")
         if record["id"]:
             self._import_dependency(
@@ -565,7 +548,6 @@ class ProductTemplateImporter(Component):
             attr_line = template.with_context(
                 active_test=False
             ).attribute_line_ids.filtered(lambda l: l.attribute_id.id == attr_id)
-            print('attr_line', attr_line)
             if attr_line:
                 # attr_line.write({"value_ids": [(6, 0, value_ids)], "active": True})
                 remaining_attr_lines -= attr_line
@@ -665,7 +647,6 @@ class ProductTemplateImporter(Component):
 
     def _import_default_category(self):
         record = self.pos_record
-        print("_import_default_category", record)
         if int(record["category_id"]):
             try:
                 self._import_dependency(

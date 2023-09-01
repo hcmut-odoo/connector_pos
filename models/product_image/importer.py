@@ -76,10 +76,7 @@ class ProductImageImporter(Component):
             # TODO add activity to warn about he failure
             if product_tmpl:
                 pass
-        # msg = _("Import of image id `%s` failed. Error: `%s`") % (
-        #     image_id,
-        #     error.msg,
-        # )
+
         if str(product_tmpl.default_image_id) != str(image_id):
             return
         self.binder_for("pos.product.image")
