@@ -680,38 +680,6 @@ class SaleOrderLineMapper(Component):
     def name(self, record):
         return {"name":record["product"]["name"]}
 
-    # @mapping
-    # def product_quantity(self, record):
-    #     # if not self.pos_cart_item_record:
-    #     #     pos_order_id = record["id"]
-        
-    #     #     # Order item ids
-    #     #     pos_order_item_ids = self.client.search('order_item', options={
-    #     #         'action': 'list', 
-    #     #         'filter': {
-    #     #             'order_id': { 
-    #     #                 'operator': 'eq', 
-    #     #                 'value': pos_order_id
-    #     #             }
-    #     #         }
-    #     #     })
-
-    #     #     # Order item record
-    #     #     self.pos_order_item_record = self.client.get("order_item", pos_order_item_ids[0], {'action': 'find'})
-            
-    #     #     # Cart item id
-    #     #     self.pos_cart_item_id = self.pos_order_item_record["cart_item_id"]
-
-    #     #     # Cart item record
-    #     #     self.pos_cart_item_record = self.client.get("cart_item", self.pos_cart_item_id, {'action': 'find'})
-
-    #     # return self.pos_cart_item_record["quantity"]
-    #     return {"product_quantity": record["quantity"]}
-
-    # @mapping
-    # def reduction_percent(self, record):
-    #     return 0
-
     @mapping
     def pos_id(self, record):
         print("pos_id record", record)
@@ -726,11 +694,21 @@ class SaleOrderLineMapper(Component):
 
     @mapping
     def product_id(self, record):
-        print("product_id", record)
-        product = record.get("product")     
-        return {
-            "product_id": product["id"]
-        }
+        print("sale_order product_id", record)
+        binder = self.binder_for("pos.product.template")
+        template = binder.to_internal(record["product"]["id"], unwrap=True)
+        product = self.env["product.product"].search(
+            [
+                ("product_tmpl_id", "=", template.id),
+                # "|",
+                # ("company_id", "=", self.backend_record.company_id.id),
+                # ("company_id", "=", False),
+            ],
+            limit=1,
+        )
+        if not product:
+            return {}
+        return {"product_id": product.id}
 
     def _find_tax(self, pos_tax_id):
         binder = self.binder_for("pos.account.tax")

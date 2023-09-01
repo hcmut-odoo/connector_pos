@@ -382,7 +382,7 @@ class BatchImporter(AbstractComponent):
     _inherit = ["base.importer", "base.pos.connector"]
     _usage = "batch.importer"
 
-    page_size = 1000
+    page_size = 500
 
     def run(self, filters=None, **kwargs):
         """
@@ -401,13 +401,18 @@ class BatchImporter(AbstractComponent):
 
         # Make a copy of filters to prevent applying the parameters to other batch imports
         filters = filters.copy()
-        # page_number = 0
-        # filters["limit"] = "%d" % (page_number * self.page_size, self.page_size)
-        # record_ids = self._run_page(filters, **kwargs)
-        # while len(record_ids) == self.page_size:
-        #     page_number += 1
-        #     filters["limit"] = "%d,%d" % (page_number * self.page_size, self.page_size)
-        self._run_page(filters, **kwargs)
+        
+        # Init pagination parameter
+        page_number = 1
+        filters["limit"] = self.page_size
+        filters["page"] = page_number
+
+        record_ids = self._run_page(filters, **kwargs)
+        while len(record_ids) == self.page_size:
+            page_number += 1
+            filters["page"] = page_number
+            record_ids = self._run_page(filters, **kwargs)
+
 
     def _run_page(self, filters, **kwargs):
         """
