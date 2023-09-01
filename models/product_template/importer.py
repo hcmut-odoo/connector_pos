@@ -400,7 +400,7 @@ class ProductInventoryBatchImporter(Component):
         records = self.client.search("product_variant", filters)
         for variant_id in records:
             variant_record = self.client.find("product_variant", variant_id)
-            self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
+            self._import_record(variant_id, record=variant_record, **kwargs)
         # print("start ProductInventoryBatchImporter _run_page")
         # records = [1]
         # record = {
@@ -433,7 +433,7 @@ class ProductInventoryImporter(Component):
     _apply_on = "pos._import_stock_available"
 
     def _get_quantity(self, record):
-        variant = self.client.find("product_variant", record["id"]).get("data")
+        variant = self.client.find("product_variant", record["id"])
 
         return int(variant["stock_qty"])
         # return 61
@@ -665,6 +665,7 @@ class ProductTemplateImporter(Component):
 
     def _import_default_category(self):
         record = self.pos_record
+        print("_import_default_category", record)
         if int(record["category_id"]):
             try:
                 self._import_dependency(

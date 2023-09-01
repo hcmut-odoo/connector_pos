@@ -285,7 +285,7 @@ class SaleOrderImportMapper(Component):
         })
 
         # pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})
-        pos_invoice_record = self.client.find("invoice", pos_invoice_ids[0])["data"]
+        pos_invoice_record = self.client.find("invoice", pos_invoice_ids[0])
         self.pos_invoice_record = pos_invoice_record
         print("pos_invoice_record",pos_invoice_record)
         return {"total_amount":pos_invoice_record["total"]}

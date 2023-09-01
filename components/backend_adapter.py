@@ -192,7 +192,8 @@ class GenericAdapter(AbstractComponent):
         )
 
         res = self.client.find(self._pos_model, id_)
-        return res.get('data')
+        print('def read()', res)
+        return res
 
 
     def create(self, attributes=None):
