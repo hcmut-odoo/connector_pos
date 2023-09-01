@@ -253,7 +253,6 @@ class SaleOrderImportMapper(Component):
         print("invoice_number",record)
         pos_order_id = record["id"]
         pos_invoice_ids = self.client.search('invoice', options={
-            'action': 'list', 
             'filter': {
                 'order_id': { 
                     'operator': 'eq', 
@@ -277,7 +276,6 @@ class SaleOrderImportMapper(Component):
         print("total_paid",record)
         pos_order_id = record["id"]
         pos_invoice_ids = self.client.search('invoice', options={
-            'action': 'list', 
             'filter': {
                 'order_id': { 
                     'operator': 'eq', 
@@ -287,7 +285,7 @@ class SaleOrderImportMapper(Component):
         })
 
         # pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})
-        pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})["data"]
+        pos_invoice_record = self.client.find("invoice", pos_invoice_ids[0])
         self.pos_invoice_record = pos_invoice_record
         print("pos_invoice_record",pos_invoice_record)
         return {"total_amount":pos_invoice_record["total"]}
@@ -380,11 +378,10 @@ class SaleOrderImportMapper(Component):
         if self.pos_invoice_record:
             pos_invoice_record = self.pos_invoice_record
         elif self.pos_invoice_id:
-            pos_invoice_record = self.client.get("invoice", self.pos_invoice_id, {'action': 'find'})
+            pos_invoice_record = self.client.find("invoice", self.pos_invoice_id)
         else:
             pos_order_id = record["id"]
             pos_invoice_ids = self.client.search('invoice', options={
-                'action': 'list', 
                 'filter': {
                     'order_id': { 
                         'operator': 'eq', 
@@ -393,7 +390,7 @@ class SaleOrderImportMapper(Component):
                 }
             })
 
-            pos_invoice_record = self.client.get("invoice", pos_invoice_ids[0], {'action': 'find'})
+            pos_invoice_record = self.client.find("invoice", pos_invoice_ids[0])
 
         # VAT 10% per total amount of invoice
         tax = float(pos_invoice_record["total"])*0.1
@@ -753,7 +750,6 @@ class SaleOrderLineDiscountMapper(Component):
         
         # Order item ids
         pos_order_item_ids = self.client.search('order_item', options={
-            'action': 'list', 
             'filter': {
                 'order_id': { 
                     'operator': 'eq', 
@@ -763,19 +759,19 @@ class SaleOrderLineDiscountMapper(Component):
         })
 
         # Order item record
-        self.pos_order_item_record = self.client.get("order_item", pos_order_item_ids[0], {'action': 'find'})
+        self.pos_order_item_record = self.client.find("order_item", pos_order_item_ids[0])
         
         # Cart item id
         self.pos_cart_item_id = self.pos_order_item_record["cart_item_id"]
 
         # Cart item record
-        self.pos_cart_item_record = self.client.get("cart_item", self.pos_cart_item_id, {'action': 'find'})
+        self.pos_cart_item_record = self.client.find("cart_item", self.pos_cart_item_id)
 
         # Product and variant id
         self.pos_product_id = self.pos_cart_item_record["product_id"]
         self.pos_product_variant_id = self.pos_cart_item_record["product_variant_id"]
         
-        self.pos_product_variant_record = self.client.get("product_variant", self.pos_product_variant_id, {'action': 'find'})
+        self.pos_product_variant_record = self.client.find("product_variant", self.pos_product_variant_id)
 
         price_unit = self.pos_product_variant_record["extend_price"]
 

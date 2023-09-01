@@ -162,7 +162,7 @@ class PosProductTemplate(models.Model):
             date = {'end': now_fmt}
 
         self.env["pos.product.template"].import_batch(
-            backend, filters={'action': 'list', 'date': date}, priority=15, **kwargs
+            backend, filters={'date': date}, priority=15, **kwargs
         )
 
         backend.import_products_since = now_fmt

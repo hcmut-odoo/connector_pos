@@ -188,14 +188,12 @@ class GenericAdapter(AbstractComponent):
 
         """
         print(
-            f"method read, model {self._pos_model} id {id_}, attributes {attributes}"
+            f"method read, model {self._pos_model} id {id_}"
         )
 
-        if attributes is None:
-            attributes = {}
-
-        res = self.client.get(self._pos_model, id_, options=attributes)
-        return res.get('data')
+        res = self.client.find(self._pos_model, id_)
+        print('def read()', res)
+        return res
 
 
     def create(self, attributes=None):

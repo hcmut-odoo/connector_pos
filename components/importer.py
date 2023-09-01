@@ -79,8 +79,9 @@ class PosImporter(AbstractComponent):
         """
         Return the raw Pos data for `self.pos_id`.
         """
-
-        return self.backend_adapter.read(self.pos_id, {'action': 'find'})
+        data = self.backend_adapter.read(self.pos_id)
+        print('_get_pos_data', self.pos_id, data)
+        return self.backend_adapter.read(self.pos_id)
 
 
     def _has_to_skip(self, binding=False):
