@@ -261,26 +261,5 @@
         <field name="res_model">pos.backend</field>
         <field name="view_mode">tree,form</field>
     </record>
-
-
-    <!-- <record id="view_pos_shop_form" model="ir.ui.view">
-        <field name="name">pos.backend.form</field>
-        <field name="model">pos.backend</field>
-        <field name="arch" type="xml">
-            <form string="Pos Shop">
-                <sheet>
-                    <h1>
-                        <field name="name" class="oe_inline" />
-                    </h1>
-                    <group>
-                        <field name="shop_backend_id" />
-                        <field name="odoo_id" />
-                    </group>
-                    <group>
-                        <field name="default_url" />
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record> -->
+    
 </odoo>

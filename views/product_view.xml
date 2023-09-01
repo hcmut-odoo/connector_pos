@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+    <record id="product_normal_form_view_default_check" model="ir.ui.view">
+       <field name="model">product.product</field>
+       <field name="inherit_id" ref="product.product_normal_form_view" />
+       <field name="arch" type="xml">
+           <field name="default_code" position="after">
+                <field
+                    name="default_on"
+                    attrs="{'invisible': [
+                                        ('product_variant_count', '=', 1)
+                                    ]}"
+                />
+                <field
+                    name="impact_price"
+                    attrs="{'invisible': [
+                        ('product_variant_count', '=', 1)
+                        ]}"
+                />
+           </field>
+           <xpath expr="//field[@name='lst_price']" position="attributes">
+               <attribute name="readonly">1</attribute>
+           </xpath>
+       </field>
+    </record>
+
+    <record id="product_product_tree_pos_view" model="ir.ui.view">
+        <field name="name">product.product.pos.tree</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_product_tree_view" />
+        <field name="arch" type="xml">
+            <field name="lst_price" position="after">
+                <field name="default_on" />
+            </field>
+            <field name="lst_price" position="after">
+                <field name="impact_price" />
+            </field>
+        </field>
+    </record>
+
+    <!--This is a product inherited form that will be dynamically populated-->
+    <record id="product_normal_form_view" model="ir.ui.view">
+        <field name="model">product.product</field>
+        <field
+            name="inherit_id"
+            ref="connector_base_product.product_normal_form_view"
+        />
+        <field name="arch" type="xml">
+            <page name="connector" position="attributes">
+                 <attribute name="invisible">0</attribute>
+            </page>
+            <page name="connector" position="inside">
+                <div attrs="{'invisible': [('product_variant_count', '>', 1)]}">
+                    <p>To show Pos binding go to: <button
+                            name="open_product_template"
+                            type="object"
+                            string="product template"
+                            class="oe_link"
+                        /></p>
+                </div>
+                 <group
+                    string="Pos Bindings"
+                    attrs="{'invisible': [('attribute_line_ids', '=', [])]}"
+                >
+                     <field name="pos_variants_bind_ids" nolabel="1" />
+                 </group>
+            </page>
+        </field>
+    </record>
+
+    <!--This is a product inherited form that will be dynamically populated-->
+    <record id="product_template_common_form" model="ir.ui.view">
+       <field name="model">product.template</field>
+       <field
+            name="inherit_id"
+            ref="connector_base_product.product_template_common_form"
+        />
+       <field name="arch" type="xml">
+           <page name="connector" position="attributes">
+                <attribute name="invisible">0</attribute>
+           </page>
+           <page name="connector" position="inside">
+                <group string="Pos Bindings">
+                    <field name="pos_bind_ids" nolabel="1" />
+                </group>
+           </page>
+       </field>
+    </record>
+
+    <record id="product_template_default_category_form" model="ir.ui.view">
+       <field name="model">product.template</field>
+       <field
+            name="inherit_id"
+            ref="product_multi_category.product_template_only_form_view_add_categids"
+        />
+       <field name="arch" type="xml">
+           <field name="categ_ids" position="after">
+               <field
+                    name="pos_default_category_id"
+                    domain="[('id', 'in', categ_ids)]"
+                    options="{'no_create': True}"
+                />
+           </field>
+       </field>
+    </record>
+
+    <record id="product_connector_pos_form_view" model="ir.ui.view">
+       <field name="model">pos.product.template</field>
+       <field name="arch" type="xml">
+            <form string="Pos fields">
+                <sheet>
+                    <group col="1">
+                        <field name="name" />
+                        <field name="backend_id" />
+                        <field name="description_short" />
+                        <field name="description" />
+                    </group>
+                    <group col="4" colspan="4">
+                        <field name="date_add" />
+                        <field name="date_upd" />
+                        <field name="sale_ok" />
+                        <field name="quantity" string="qty" />
+                        <field name="out_of_stock" />
+                        <field name="always_available" />
+                        <field name="available_for_order" />
+                        <field name="show_price" />
+                        <field name="on_sale" />
+                        <field name="low_stock_threshold" />
+                        <field name="low_stock_alert" />
+                        <field name="visibility" />
+                    </group>
+                </sheet>
+            </form>
+       </field>
+    </record>
+
+    <record id="product_connector_pos_tree_view" model="ir.ui.view">
+        <field name="name">pos.product.template.tree</field>
+        <field name="model">pos.product.template</field>
+        <field name="arch" type="xml">
+            <tree string="Pos product template" create="0">
+                <field name="backend_id" string="Backend" />
+                <field name="name" />
+                <field name="date_add" />
+                <field name="date_upd" />
+                <field name="description" />
+                <field name="quantity" />
+                <field name="visibility" />
+                <field name="pos_id" />
+                <field name="reference" />
+                <field name="no_export" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="product_connector_pos_search" model="ir.ui.view">
+        <field name="name">pos.product.template.search</field>
+        <field name="model">pos.product.template</field>
+        <field name="arch" type="xml">
+            <search string="Pos Product">
+                <field name="pos_id" />
+                <field name="name" />
+                <field name="reference" />
+            </search>
+        </field>
+    </record>
+
+    <record id="combination_connector_pos_form_view" model="ir.ui.view">
+       <field name="model">pos.product.variant</field>
+       <field name="arch" type="xml">
+            <form string="pos fields">
+                <group col="2">
+                    <field name="backend_id" />
+                    <field name="no_export" />
+                    <field name="quantity" />
+                </group>
+            </form>
+       </field>
+    </record>
+
+    <record id="combination_connector_pos_tree_view" model="ir.ui.view">
+        <field name="model">pos.product.variant</field>
+        <field name="arch" type="xml">
+            <tree string="pos product">
+                <field name="name" />
+                <field
+                    name="product_template_attribute_value_ids"
+                    widget="many2many_tags"
+                />
+                <field name="backend_id" string="Backend" />
+                <field name="quantity" />
+                <field name="pos_id" />
+                <field name="reference" />
+                <field name="no_export" />
+            </tree>
+        </field>
+    </record>
+
+</odoo>
