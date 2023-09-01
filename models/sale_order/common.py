@@ -77,7 +77,7 @@ class PosSaleOrder(models.Model):
         else:
             date = {"end": now_fmt}
         self.env["pos.sale.order"].import_batch(
-            backend, filters={'date': date, 'action': 'list'}, priority=5, max_retries=0
+            backend, filters={'date': date}, priority=5, max_retries=0
         )
 
         # if since_date:

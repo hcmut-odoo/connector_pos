@@ -391,7 +391,7 @@ class ProductInventoryBatchImporter(Component):
         if filters is None:
             filters = {}
 
-        filters = {'action': 'list'}
+        # filters = {'action': 'list'}
         _super = super()
 
         return _super.run(filters, **kwargs)
@@ -399,7 +399,7 @@ class ProductInventoryBatchImporter(Component):
     def _run_page(self, filters, **kwargs):
         records = self.client.search("product_variant", filters)
         for variant_id in records:
-            variant_record = self.client.get("product_variant", variant_id, {'action': 'find'})
+            variant_record = self.client.find("product_variant", variant_id)
             self._import_record(variant_id, record=variant_record.get('data'), **kwargs)
         # print("start ProductInventoryBatchImporter _run_page")
         # records = [1]
@@ -433,8 +433,7 @@ class ProductInventoryImporter(Component):
     _apply_on = "pos._import_stock_available"
 
     def _get_quantity(self, record):
-        filters = {'action': 'find'}
-        variant = self.client.get("product_variant", record["id"], filters).get("data")
+        variant = self.client.find("product_variant", record["id"]).get("data")
 
         return int(variant["stock_qty"])
         # return 61
@@ -648,7 +647,7 @@ class ProductTemplateImporter(Component):
         )
 
         for option_value in option_values:
-            option_value = backend_adapter.read(option_value["id"], {'action': 'find'})
+            option_value = backend_adapter.read(option_value["id"])
             self._import_dependency(
                 option_value["id"],
                 "pos.product.variant.option",

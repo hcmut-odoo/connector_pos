@@ -57,7 +57,7 @@ class PosResPartner(models.Model):
 
 
         self.env["pos.res.partner"].import_batch(
-            backend=backend_record, filters={'date': date, 'action': 'list'}, priority=15, **kwargs
+            backend=backend_record, filters={'date': date}, priority=15, **kwargs
         )
 
         backend_record.import_partners_since = now_fmt

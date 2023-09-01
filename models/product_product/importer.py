@@ -92,7 +92,7 @@ class ProductCombinationImporter(Component):
             tmpl_adapter = self.component(
                 usage="backend.adapter", model_name="pos.product.template"
             )   
-            tmpl_record = tmpl_adapter.read(self.pos_record["product_id"], {'action': 'find'})
+            tmpl_record = tmpl_adapter.read(self.pos_record["product_id"])
             print("ProductCombinationImporter _import record", tmpl_record)
             self.work.parent_pos_record = tmpl_record
             if "parent_pos_record" not in self.work._propagate_kwargs:
