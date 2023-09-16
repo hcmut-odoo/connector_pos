@@ -76,21 +76,7 @@ class SaleImportRule(Component):
         
     def _mapping_state(self, state):
         state_mappings = {
-            'processing': 'Quotation/Draft',
-            'done': 'Confirmed',
-            'cancel': 'Canceled'
-        }
-
-        return state_mappings.get(state, state)
-
-
-
-        
-    def _mapping_state(self, state):
-        state_mappings = {
-            'processing': 'Quotation/Draft',
-            'done': 'Confirmed',
-            'cancel': 'Canceled'
+            'processing': 'Confirmed',
         }
 
         return state_mappings.get(state, state)
@@ -120,7 +106,7 @@ class SaleImportRule(Component):
         #             % (pos_state_id,)
         #         )
         state = record["status"]
-        if state == "processing" or state == "cancel":
+        if state == "done" or state == "cancel":
         # if state not in self.backend_record.importable_order_state_ids:
             raise NothingToDoJob(
                 _(
@@ -189,41 +175,28 @@ class SaleOrderImportMapper(Component):
 
 
 
-    @mapping
-    def invoice_number(self, record):
-        pos_order_id = record["id"]
-        pos_invoice_ids = self.client.search('invoice', options={
-            'filter': {
-                'order_id': { 
-                    'operator': 'eq', 
-                    'value': pos_order_id
-                }
-            }
-        })
+    # @mapping
+    # def invoice_number(self, record):
+    #     pos_order_id = record["id"]
+    #     pos_invoice_ids = self.client.search('invoice', options={
+    #         'filter': {
+    #             'order_id': { 
+    #                 'operator': 'eq', 
+    #                 'value': pos_order_id
+    #             }
+    #         }
+    #     })
         
-        # Assign to class scope
-        if pos_invoice_ids[0]:
-            self.pos_invoice_id = pos_invoice_ids[0]
+    #     # Assign to class scope
+    #     if pos_invoice_ids[0]:
+    #         self.pos_invoice_id = pos_invoice_ids[0]
 
-        return {"pos_invoice_number":self.pos_invoice_id}
+    #     return {"pos_invoice_number":self.pos_invoice_id}
 
 
     @mapping
     def total_paid(self, record):
-        pos_order_id = record["id"]
-        pos_invoice_ids = self.client.search('invoice', options={
-            'filter': {
-                'order_id': { 
-                    'operator': 'eq', 
-                    'value': pos_order_id
-                }
-            }
-        })
-
-        pos_invoice_record = self.client.find("invoice", pos_invoice_ids[0])
-        self.pos_invoice_record = pos_invoice_record
-
-        return {"total_amount":pos_invoice_record["total"]}
+        return {"total_amount":record["total"]}
 
     @mapping
     def state(self, record):
@@ -253,25 +226,8 @@ class SaleOrderImportMapper(Component):
 
     @mapping
     def total_tax_amount(self, record):
-        if self.pos_invoice_record:
-            pos_invoice_record = self.pos_invoice_record
-        elif self.pos_invoice_id:
-            pos_invoice_record = self.client.find("invoice", self.pos_invoice_id)
-        else:
-            pos_order_id = record["id"]
-            pos_invoice_ids = self.client.search('invoice', options={
-                'filter': {
-                    'order_id': { 
-                        'operator': 'eq', 
-                        'value': pos_order_id
-                    }
-                }
-            })
-
-            pos_invoice_record = self.client.find("invoice", pos_invoice_ids[0])
-
-        # VAT 10% per total amount of invoice
-        tax = float(pos_invoice_record["total"])*0.1
+        
+        tax = float(record["total"])*0.1
 
         return {"total_amount_tax": tax}
 

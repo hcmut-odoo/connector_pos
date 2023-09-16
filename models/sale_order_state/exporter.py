@@ -12,9 +12,8 @@ class SaleStateExporter(Component):
 
     def run(self, binding, state, **kwargs):
         datas = {
-            "order_history": {
-                "id_order": binding.pos_id,
-                "id_order_state": state,
-            }
+            'action': state,
+            'id': binding.pos_id
         }
-        self.backend_adapter.update_sale_state(binding.pos_id, datas)
+
+        self.backend_adapter.update_sale_state(datas)
