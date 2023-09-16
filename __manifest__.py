@@ -17,6 +17,7 @@
         "connector_ecommerce",  # oca/connector-ecommerce
         "purchase",
         "onchange_helper",
+        "web_tour",
     ],
     "external_dependencies": {
         "python": [
@@ -44,7 +45,12 @@
         "views/connector_pos_menu.xml",
         # "views/account_view.xml",
         "views/queue_job_views.xml",
+        'views/assets.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            '/connector_pos/static/src/js/tour.js'
+        ]},
     "installable": True,
     "application": True,
 }
