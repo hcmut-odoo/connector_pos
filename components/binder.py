@@ -32,4 +32,5 @@ class PosModelBinder(Component):
         "pos.product.variant.option",
         "pos.sale.order",
         "pos.sale.order.state",
+        "pos.sale.order.state.exporter"
     ]
