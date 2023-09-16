@@ -102,8 +102,6 @@ class PosSaleOrder(models.Model):
         return None
 
     def export_sale_state(self, backend, binding, new_state):
-        print("export_sale_state")
-
         with backend.work_on(self._name) as work:
             exporter = work.component(usage="sale.order.state.exporter")
             exporter.run(binding, new_state)
@@ -202,7 +200,6 @@ class SaleOrderAdapter(Component):
     _export_node_name = "order"
 
     def update_sale_state(self, datas):
-        print("datas", datas)
         return self.client.add("order", options=datas)
 
     def search(self, filters=None):
