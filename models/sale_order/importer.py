@@ -130,7 +130,9 @@ class SaleOrderImportMapper(Component):
     ]
 
     def _get_sale_order_lines(self, record):
+        print("_get_sale_order_lines",record)
         orders = record.get("order_rows")
+        print("_get_sale_order_lines",orders)
         if isinstance(orders, dict):
             return [orders]
         return orders
@@ -144,7 +146,12 @@ class SaleOrderImportMapper(Component):
     ]
 
     def _map_child(self, map_record, from_attr, to_attr, model_name):
+        print("map_record", map_record)
+        print("from_attr", from_attr)
+        print("to_attr", to_attr)
+
         source = map_record.source
+        print("source", source)
         # TODO patch ImportMapper in connector to support callable
         if callable(from_attr):
             child_records = from_attr(self, source)
@@ -170,29 +177,7 @@ class SaleOrderImportMapper(Component):
             limit=1,
         )
         return len(sale_order) == 1
-
-    direct = []
-
-
-
-    # @mapping
-    # def invoice_number(self, record):
-    #     pos_order_id = record["id"]
-    #     pos_invoice_ids = self.client.search('invoice', options={
-    #         'filter': {
-    #             'order_id': { 
-    #                 'operator': 'eq', 
-    #                 'value': pos_order_id
-    #             }
-    #         }
-    #     })
-        
-    #     # Assign to class scope
-    #     if pos_invoice_ids[0]:
-    #         self.pos_invoice_id = pos_invoice_ids[0]
-
-    #     return {"pos_invoice_number":self.pos_invoice_id}
-
+    
 
     @mapping
     def total_paid(self, record):
@@ -304,6 +289,7 @@ class SaleOrderImporter(Component):
 
     def _import_dependencies(self):        
         record = self.pos_record
+        print("_import_dependencies sale_order")
         pos_customer_id = record["user_id"]
 
         self._import_dependency(
@@ -314,7 +300,12 @@ class SaleOrderImporter(Component):
 
         pos_product_and_variant_tuples = []
         order_rows = record.get("order_rows")
-
+        print("order_rows before", order_rows)
+        if not order_rows:
+            pos_sale_order_record = self.client.find("order", record["id"])
+            order_rows = pos_sale_order_record.get("order_rows")
+    
+        print("order_rows after", order_rows)
         for order_row in order_rows:
             pos_product_template_id = order_row.get("product")["id"]
             pos_product_variant_id = order_row.get("product")["variant_id"]
@@ -482,6 +473,7 @@ class SaleOrderLineDiscountMapper(Component):
     def price_unit(self, record):
         # Pos order id
         pos_order_id = record["id"]
+        print("price_unit pos_order_id", pos_order_id)
         
         # Order item ids
         pos_order_item_ids = self.client.search('order_item', options={
@@ -492,6 +484,7 @@ class SaleOrderLineDiscountMapper(Component):
                 }
             }
         })
+        print("price_unit pos_order_item_ids", pos_order_item_ids)
 
         # Order item record
         self.pos_order_item_record = self.client.find("order_item", pos_order_item_ids[0])

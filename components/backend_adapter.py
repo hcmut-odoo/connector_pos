@@ -168,6 +168,27 @@ class GenericAdapter(AbstractComponent):
             "method search, model %s, filters %s", self._pos_model, str(filters)
         )
         return self.client.search(self._pos_model, filters)
+    
+    @retryable_error
+    def list(self, filters=None):
+        """
+        List records based on specified criteria and return a list of matching records.
+
+        Args:
+            filters (Optional[Dict[str, Any]]): The criteria or filters to apply during the search.
+                Defaults to None.
+
+        Returns:
+            list: A list of records that match the list criteria.
+
+        Raises:
+            Exception: If an error occurs during the list operation.
+
+        """
+        print(
+            "method list, model %s, filters %s", self._pos_model, str(filters)
+        )
+        return self.client.list(self._pos_model, filters)
 
 
     @retryable_error

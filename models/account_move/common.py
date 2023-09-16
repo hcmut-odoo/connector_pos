@@ -35,12 +35,15 @@ class AccountMove(models.Model):
                 if refund:
                     invoice_line.unlink()
                     line_replacement[move] = refund
-        
 
-        pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
-        if pos_order_record:
-            backend_id = pos_order_record.backend_id
-            self.env["pos.sale.order"].export_sale_state(backend_id, pos_order_record, "accept")
+            print("account_move_name", self.name)
+            print("invoice_origin")
+
+            pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
+            if pos_order_record:
+                backend_id = pos_order_record.backend_id
+                self.env["pos.sale.order"].export_sale_state(backend_id, pos_order_record, "accept")
+
         result = super().action_post()        
         return result
     
@@ -69,10 +72,10 @@ class AccountMove(models.Model):
                     invoice_line.unlink()
                     line_replacement[move] = refund
 
-        pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
-        if pos_order_record:
-            backend_id = pos_order_record.backend_id
-            self.env["pos.sale.order"].export_sale_state(backend_id, pos_order_record, "reject")
+            pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
+            if pos_order_record:
+                backend_id = pos_order_record.backend_id
+                self.env["pos.sale.order"].export_sale_state(backend_id, pos_order_record, "reject")
 
         result = super().button_cancel()        
         return result
