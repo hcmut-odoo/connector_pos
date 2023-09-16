@@ -101,14 +101,12 @@ class PosSaleOrder(models.Model):
                 return state_list.pos_state_id.pos_id
         return None
 
-    def export_sale_state(self):
-        for sale in self:
-            new_state = sale.find_pos_state()
-            if not new_state:
-                continue
-            with sale.backend_id.work_on(self._name) as work:
-                exporter = work.component(usage="sale.order.state.exporter")
-                return exporter.run(self, new_state)
+    def export_sale_state(self, backend, binding, new_state):
+        print("export_sale_state")
+
+        with backend.work_on(self._name) as work:
+            exporter = work.component(usage="sale.order.state.exporter")
+            exporter.run(binding, new_state)
 
 
 class SaleOrderLine(models.Model):
@@ -202,6 +200,14 @@ class SaleOrderAdapter(Component):
     _apply_on = "pos.sale.order"
     _pos_model = "order"
     _export_node_name = "order"
+
+    def update_sale_state(self, datas):
+        print("datas", datas)
+        return self.client.add("order", options=datas)
+
+    def search(self, filters=None):
+        result = super().search(filters=filters)
+        return result
 
 
 class SaleOrderLineAdapter(Component):
