@@ -404,7 +404,7 @@ class BatchImporter(AbstractComponent):
     _inherit = ["base.importer", "base.pos.connector"]
     _usage = "batch.importer"
 
-    page_size = 5000
+    page_size = 100
 
     def run(self, filters=None, **kwargs):
         """
