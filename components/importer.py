@@ -399,7 +399,7 @@ class BatchImporter(AbstractComponent):
     _inherit = ["base.importer", "base.pos.connector"]
     _usage = "batch.importer"
 
-    page_size = 50
+    page_size = 100
 
     def run(self, filters=None, **kwargs):
         """
@@ -424,10 +424,10 @@ class BatchImporter(AbstractComponent):
         filters["page"] = page_number
 
         record_ids = self._run_page(filters, **kwargs)
-        # while len(record_ids) == self.page_size:
-        #     page_number += 1
-        #     filters["page"] = page_number
-        #     record_ids = self._run_page(filters, **kwargs)
+        while len(record_ids) == self.page_size:
+            page_number += 1
+            filters["page"] = page_number
+            record_ids = self._run_page(filters, **kwargs)
 
 
     def _run_page(self, filters, **kwargs):
