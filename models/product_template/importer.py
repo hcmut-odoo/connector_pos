@@ -427,11 +427,32 @@ class ProductInventoryImporter(Component):
     def _import_dependencies(self):
         """Import the dependencies for the record"""
         record = self.pos_record
-        self._import_dependency(record["product_id"], "pos.product.template")
+        backend = self.backend_record
+        product_tmp = self.find_product_template(backend.id, record["product_id"])
+
+        if not product_tmp:
+            # print("Not found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
+            self._import_dependency(record["product_id"], "pos.product.template")
+        # else:
+            # print("Found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
+
         if record["id"]:
             self._import_dependency(
                 record, "pos.product.variant"
             )
+
+    def find_product_template(self, backend_id, product_tmp_id):
+        pr_obj = self.env["pos.product.template"]
+        pos_product_tmp = pr_obj.search([
+            ("pos_id", "=", product_tmp_id),
+            ("backend_id", "=", backend_id)
+        ])
+
+        # print("find_product_template", pos_product_tmp.id)
+        if pos_product_tmp.id:
+            return True
+        
+        return False
 
     def run(self, pos_id, record=None, **kwargs):
         assert record
