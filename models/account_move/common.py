@@ -36,9 +36,6 @@ class AccountMove(models.Model):
                     invoice_line.unlink()
                     line_replacement[move] = refund
 
-            print("account_move_name", self.name)
-            print("invoice_origin")
-
             pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
             if pos_order_record:
                 backend_id = pos_order_record.backend_id

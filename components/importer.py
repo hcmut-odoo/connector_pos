@@ -62,10 +62,8 @@ class PosBaseImporter(AbstractComponent):
         if always or not binder.to_internal(pos_id):
             importer = self.component(usage="record.importer", model_name=binding_model)
             if pos_record:
-                print("pos_record is valid", pos_record, binding_model)
                 importer.run(pos_record, **kwargs)
             else:
-                print("pos_record is valid, using pos_id", pos_id, binding_model)
                 importer.run(pos_id, **kwargs)
 
 class PosImporter(AbstractComponent):
@@ -343,10 +341,8 @@ class PosImporter(AbstractComponent):
         if not self.pos_record:
             if isinstance(pos_id, dict):
                 self.pos_record = pos_id
-                print("Don't have to call api to get record", self.pos_record)
             else:
                 self.pos_record = self._get_pos_data()
-                print("Have to call api to get record", self.pos_id)
 
         # put back a not active test domain so the rest of the import process
         # happen in normal conditions
@@ -360,7 +356,6 @@ class PosImporter(AbstractComponent):
 
         # import the missing linked resources
         self._import_dependencies()
-        print("binding", binding)
         self._import(binding, **kwargs)
 
     def _import(self, binding, **kwargs):

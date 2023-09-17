@@ -130,7 +130,6 @@ class TemplateMapper(Component):
                 model_name="pos.product.variant",
             )
             variant = backend_adapter.read(int(prod["id"]))
-            print("_match_variant_odoo_record in product_template", variant)
             code = variant.get(self.backend_record.matching_product_ch)
             if not code:
                 continue
@@ -581,8 +580,6 @@ class ProductTemplateImporter(Component):
     #     delayable.set_product_image_variant(self.backend_record, variants, **kwargs)
 
     def import_variants(self):
-        # print("import_variants", self.pos_record)
-        # pos_record = self._get_pos_data()
         pos_product_record = self.pos_record
         variants = pos_product_record.get("variants", [])
 

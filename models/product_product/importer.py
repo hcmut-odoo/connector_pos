@@ -94,7 +94,6 @@ class ProductCombinationImporter(Component):
             )
 
             tmpl_record = tmpl_adapter.read(self.pos_record["product_id"])
-            print("_import in product.product", tmpl_record)
             self.work.parent_pos_record = tmpl_record
 
             if "parent_pos_record" not in self.work._propagate_kwargs:
@@ -239,7 +238,6 @@ class ProductCombinationMapper(Component):
                 usage="backend.adapter", model_name="pos.product.template"
             )
             template = backend_adapter.read(record["product_id"])
-            print("barcode in product.product", template)
             barcode = template.get("barcode") or template.get("id")
         if barcode and barcode != "0" and check_ean(barcode):
             return {"barcode": barcode}
