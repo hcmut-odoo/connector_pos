@@ -54,7 +54,7 @@
                     <group>
                         <field name="company_id" />
                     </group>
-                    <group>
+                    <group name="webservice_configuration" string="Web Service">
                         <group col="4">
                             <field name="location" colspan="4" />
                             <field name="webservice_key" colspan="4" />
@@ -73,59 +73,41 @@
                                 name="importable_order_state_ids"
                                 widget="many2many_tags"
                             />
-                            <field name="discount_product_id" />
                         </group>
                         <group string="Stock">
                             <field name="warehouse_id" />
-                            <field name="stock_location_id" />
-                            <field name="shipping_product_id" />
-                             <field name="product_qty_field" />
                         </group>
                     </group>
                     <notebook attrs="{'invisible':[('state', 'in', ['draft'])]}">
-                        <page name="import" string="Imports">
+                        <page name="import_all" string="Imports All">
                             <p class="oe_grey oe_inline">
-                                By clicking on the buttons,
-                                you will initiate the
-                                synchronizations
-                                with Pos.
-                                Note that the import or exports
-                                won't be done directly,
-                                they will create 'Jobs'
-                                executed as soon
-                                as possible.
-                            </p>
-                            <p class="oe_grey oe_inline">
-                                Once imported,
-                                some types of records,
-                                like the products
-                                or categories,
-                                need a manual review.
-                                You will find the list
-                                of the
-                                new records to review
-                                in the menu 'Connectors > Checkpoint'.
+                                Import all the neccessaries for sale flow.
                             </p>
                             <group>
                                 <div>
                                     <label
-                                        string="Import product categories"
+                                        string="Import all data"
                                         class="oe_inline"
-                                        for="import_categories_from_date"
+                                        for="import_all_data_since"
                                     />
                                     <field
-                                        name="import_categories_from_date"
+                                        name="import_all_data_since"
                                         class="oe_inline"
                                         nolabel="1"
                                     />
                                 </div>
                                 <button
-                                    name="import_product_categories"
+                                    name="import_all"
                                     type="object"
                                     class="oe_highlight"
                                     string="Import in background"
                                 />
                             </group>
+                        </page>
+                        <page name="import" string="Imports Specific">
+                            <p class="oe_grey oe_inline">
+                                Import specific data of your company
+                            </p>                                                    
                             <group>
                                 <div>
                                     <label
@@ -150,27 +132,6 @@
                                 <span>Import stock quantities</span>
                                 <button
                                     name="import_stock_qty"
-                                    type="object"
-                                    class="oe_highlight"
-                                    string="Import in background"
-                                />
-                            </group>
-                            <group>
-                                <div>
-                                   <span>Import payment mode</span>
-                                    <label
-                                        string="Import payment mode"
-                                        class="oe_inline"
-                                        for="import_payment_mode_since"
-                                    />
-                                    <field
-                                        name="import_payment_mode_since"
-                                        class="oe_inline"
-                                        nolabel="1"
-                                    />
-                                </div>
-                                <button
-                                    name="import_payment_modes"
                                     type="object"
                                     class="oe_highlight"
                                     string="Import in background"
@@ -214,28 +175,6 @@
                                     type="object"
                                     class="oe_highlight"
                                     string="Import in background"
-                                />
-                            </group>
-                            <group>
-                                <span>Import carriers</span>
-                                <div>
-                                    <button
-                                        name="import_carriers"
-                                        type="object"
-                                        class="oe_highlight"
-                                        string="Import in background"
-                                    />
-                                </div>
-                            </group>
-                        </page>
-                        <page string="Export">
-                            <group>
-                                <span>Export stock quantities</span>
-                                <button
-                                    name="update_product_stock_qty"
-                                    type="object"
-                                    class="oe_highlight"
-                                    string="Export in background"
                                 />
                             </group>
                         </page>

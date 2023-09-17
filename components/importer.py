@@ -59,12 +59,26 @@ class PosBaseImporter(AbstractComponent):
             importer_class = PosImporter
 
         binder = self.binder_for(binding_model)
-        if always or not binder.to_internal(pos_id):
+        if always:
             importer = self.component(usage="record.importer", model_name=binding_model)
             if pos_record:
                 importer.run(pos_record, **kwargs)
             else:
                 importer.run(pos_id, **kwargs)
+
+            return
+
+        else:
+            try:
+                if not binder.to_internal(pos_id):
+                    importer = self.component(usage="record.importer", model_name=binding_model)
+                    if pos_record:
+                        importer.run(pos_record, **kwargs)
+                    else:
+                        importer.run(pos_id, **kwargs)
+            except:
+                return
+
 
 class PosImporter(AbstractComponent):
     """Base importer for Pos"""
