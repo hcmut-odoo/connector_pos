@@ -49,12 +49,36 @@ class PosBaseImporter(AbstractComponent):
         """
         if not pos_id:
             return
+        if isinstance(pos_id, dict):
+            pos_record = pos_id
+            pos_id = pos_record["id"]
+        else:
+            pos_record = None
+
         if importer_class is None:
             importer_class = PosImporter
+
         binder = self.binder_for(binding_model)
-        if always or not binder.to_internal(pos_id):
+        if always:
             importer = self.component(usage="record.importer", model_name=binding_model)
-            importer.run(pos_id, **kwargs)
+            if pos_record:
+                importer.run(pos_record, **kwargs)
+            else:
+                importer.run(pos_id, **kwargs)
+
+            return
+
+        else:
+            try:
+                if not binder.to_internal(pos_id):
+                    importer = self.component(usage="record.importer", model_name=binding_model)
+                    if pos_record:
+                        importer.run(pos_record, **kwargs)
+                    else:
+                        importer.run(pos_id, **kwargs)
+            except:
+                return
+
 
 class PosImporter(AbstractComponent):
     """Base importer for Pos"""
@@ -308,23 +332,32 @@ class PosImporter(AbstractComponent):
         """
         Run the synchronization process.
 
-        :param pos_id: Identifier of the record on Pos.
+        :param pos_id: Identifier of the record or record on Pos.
         :param kwargs: Additional keyword arguments.
         :return: The result of the synchronization process. Returns `None` if the synchronization is skipped or
                 an error occurs during the process.
         :rtype: Any
         """
-        self.pos_id = pos_id
+        if isinstance(pos_id, dict):
+            self.pos_id = pos_id["id"]
+        else:
+            self.pos_id = pos_id
+
         lock_name = "import({}, {}, {}, {})".format(
             self.backend_record._name,
             self.backend_record.id,
             self.model._name,
             self.pos_id,
         )
+
         # Keep a lock on this import until the transaction is committed
         self.advisory_lock_or_retry(lock_name, retry_seconds=RETRY_ON_ADVISORY_LOCK)
         if not self.pos_record:
-            self.pos_record = self._get_pos_data()
+            if isinstance(pos_id, dict):
+                self.pos_record = pos_id
+            else:
+                self.pos_record = self._get_pos_data()
+
         # put back a not active test domain so the rest of the import process
         # happen in normal conditions
         binding = self._get_binding().with_context(active_test=True)
@@ -337,7 +370,6 @@ class PosImporter(AbstractComponent):
 
         # import the missing linked resources
         self._import_dependencies()
-
         self._import(binding, **kwargs)
 
     def _import(self, binding, **kwargs):
@@ -381,7 +413,7 @@ class BatchImporter(AbstractComponent):
     _inherit = ["base.importer", "base.pos.connector"]
     _usage = "batch.importer"
 
-    page_size = 500
+    page_size = 100
 
     def run(self, filters=None, **kwargs):
         """
@@ -422,10 +454,12 @@ class BatchImporter(AbstractComponent):
         :return: The list of record IDs processed in this page.
         :rtype: list
         """
-        record_ids = self.backend_adapter.search(filters)
+        records = self.backend_adapter.list(filters)
 
-        for record_id in record_ids:
-            self._import_record(record_id, **kwargs)
+        for record in records:
+            self._import_record(record, **kwargs)
+
+        record_ids = [record["id"] for record in records]
 
         return record_ids
 

@@ -397,11 +397,10 @@ class ProductInventoryBatchImporter(Component):
         return _super.run(filters, **kwargs)
 
     def _run_page(self, filters, **kwargs):
-        records = self.client.search("product_variant", filters)
-        for variant_id in records:
-            variant_record = self.client.find("product_variant", variant_id)
-            self._import_record(variant_id, record=variant_record, **kwargs)
-        return records
+        records = self.client.list("product_variant", filters)
+        for variant in records:
+            self._import_record(variant["id"], record=variant, **kwargs)
+        return [x["id"] for x in records]
     
     def _import_record(self, record_id, record=None, **kwargs):
         """Delay the import of the records"""
@@ -417,10 +416,7 @@ class ProductInventoryImporter(Component):
     _apply_on = "pos._import_stock_available"
 
     def _get_quantity(self, record):
-        variant = self.client.find("product_variant", record["id"])
-
-        return int(variant["stock_qty"])
-        # return 61
+        return int(record["stock_qty"])
 
     def _get_binding(self):
         record = self.pos_record
@@ -431,11 +427,32 @@ class ProductInventoryImporter(Component):
     def _import_dependencies(self):
         """Import the dependencies for the record"""
         record = self.pos_record
-        self._import_dependency(record["product_id"], "pos.product.template")
+        backend = self.backend_record
+        product_tmp = self.find_product_template(backend.id, record["product_id"])
+
+        if not product_tmp:
+            # print("Not found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
+            self._import_dependency(record["product_id"], "pos.product.template")
+        # else:
+            # print("Found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
+
         if record["id"]:
             self._import_dependency(
-                record["id"], "pos.product.variant"
+                record, "pos.product.variant"
             )
+
+    def find_product_template(self, backend_id, product_tmp_id):
+        pr_obj = self.env["pos.product.template"]
+        pos_product_tmp = pr_obj.search([
+            ("pos_id", "=", product_tmp_id),
+            ("backend_id", "=", backend_id)
+        ])
+
+        # print("find_product_template", pos_product_tmp.id)
+        if pos_product_tmp.id:
+            return True
+        
+        return False
 
     def run(self, pos_id, record=None, **kwargs):
         assert record
@@ -573,7 +590,7 @@ class ProductTemplateImporter(Component):
         if "parent_pos_record" not in self.work._propagate_kwargs:
             self.work._propagate_kwargs.append("parent_pos_record")
         self._import_dependency(
-            variant["id"], "pos.product.variant", always=True, **kwargs
+            variant, "pos.product.variant", always=True, **kwargs
         )
 
     # def _delay_product_image_variant(self, variants, **kwargs):
@@ -584,8 +601,8 @@ class ProductTemplateImporter(Component):
     #     delayable.set_product_image_variant(self.backend_record, variants, **kwargs)
 
     def import_variants(self):
-        pos_record = self._get_pos_data()
-        variants = pos_record.get("variants", [])
+        pos_product_record = self.pos_record
+        variants = pos_product_record.get("variants", [])
 
         if not isinstance(variants, list):
             variants = [variants]
@@ -629,13 +646,13 @@ class ProductTemplateImporter(Component):
         )
 
         for option_value in option_values:
-            option_value = backend_adapter.read(option_value["id"])
+            # option_value = backend_adapter.read(option_value["id"])
             self._import_dependency(
-                option_value["id"],
+                option_value,
                 "pos.product.variant.option",
             )
             self._import_dependency(
-                option_value["id"], "pos.product.variant.option.value"
+                option_value, "pos.product.variant.option.value"
             )
 
     def get_template_model_id(self):

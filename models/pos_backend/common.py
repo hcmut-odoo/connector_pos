@@ -129,6 +129,7 @@ class PosBackend(models.Model):
     import_payment_mode_since = fields.Datetime("Import Payment Modes since")
     import_categories_from_date = fields.Datetime("Import categories from date")
     import_products_since = fields.Datetime("Import Products since")
+    import_all_data_since = fields.Datetime("Import all data since")
     company_id = fields.Many2one(
         comodel_name="res.company",
         index=True,
@@ -138,18 +139,18 @@ class PosBackend(models.Model):
         ),
         string="Company",
     )
-    discount_product_id = fields.Many2one(
-        comodel_name="product.product",
-        index=True,
-        required=True,
-        string="Discount Product",
-    )
-    shipping_product_id = fields.Many2one(
-        comodel_name="product.product",
-        index=True,
-        required=True,
-        string="Shipping Product",
-    )
+    # discount_product_id = fields.Many2one(
+    #     comodel_name="product.product",
+    #     index=True,
+    #     required=True,
+    #     string="Discount Product",
+    # )
+    # shipping_product_id = fields.Many2one(
+    #     comodel_name="product.product",
+    #     index=True,
+    #     required=True,
+    #     string="Shipping Product",
+    # )
     importable_order_state_ids = fields.Many2many(
         comodel_name="sale.order.state",
         string="Importable sale order states",
@@ -466,6 +467,39 @@ class PosBackend(models.Model):
                 importer = work.component(usage="batch.importer")
                 importer.run(filters=filters)
             backend_record.import_payment_mode_since = now_fmt
+        return True
+    
+    def import_all(self):
+        now_fmt = fields.Datetime.now()
+        for backend_record in self:
+            import_category_since_date = backend_record.import_categories_from_date
+            import_partner_since_date = backend_record.import_partners_since
+            import_order_since_date = backend_record.import_orders_since
+            import_product_since_date = backend_record.import_products_since
+
+            
+            self.env["pos.product.category"].with_delay().import_product_categories(
+                backend_record, import_category_since_date
+            )
+
+            self.env["pos.product.template"].with_delay().import_products(
+                backend_record, import_product_since_date
+            )
+
+            backend_record.env["pos.product.template"].with_delay().import_inventory(
+                backend_record
+            )
+
+            self.env["pos.res.partner"].with_delay().import_customers_since(
+                backend_record=backend_record, since_date=import_partner_since_date
+            )
+
+            backend_record.env["pos.sale.order"].with_delay().import_orders_since(
+                backend_record, import_order_since_date
+            )
+
+            backend_record.import_all_data_since = now_fmt
+        
         return True
 
     @api.model

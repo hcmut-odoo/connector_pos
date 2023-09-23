@@ -333,14 +333,15 @@ class ProductCombinationOptionImporter(Component):
     _apply_on = "pos.product.variant.option"
 
     def _import_values(self, attribute_binding):
-        record = self.pos_record
-        option_values = [{"id": record["id"]}]
-        if not isinstance(option_values, list):
-            option_values = [option_values]
-        for option_value in option_values:
-            self._import_dependency(
-                option_value["id"], "pos.product.variant.option.value"
-            )
+        option_value = self.pos_record
+        # option_values = [{"id": record["id"]}]
+        # if not isinstance(option_values, list):
+        #     option_values = [option_values]
+
+        # for option_value in option_values:
+        self._import_dependency(
+            option_value, "pos.product.variant.option.value"
+        )
 
     def _after_import(self, binding):
         super()._after_import(binding)

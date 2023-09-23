@@ -144,6 +144,7 @@ class SaleOrderImportMapper(Component):
     ]
 
     def _map_child(self, map_record, from_attr, to_attr, model_name):
+
         source = map_record.source
         # TODO patch ImportMapper in connector to support callable
         if callable(from_attr):
@@ -170,29 +171,7 @@ class SaleOrderImportMapper(Component):
             limit=1,
         )
         return len(sale_order) == 1
-
-    direct = []
-
-
-
-    # @mapping
-    # def invoice_number(self, record):
-    #     pos_order_id = record["id"]
-    #     pos_invoice_ids = self.client.search('invoice', options={
-    #         'filter': {
-    #             'order_id': { 
-    #                 'operator': 'eq', 
-    #                 'value': pos_order_id
-    #             }
-    #         }
-    #     })
-        
-    #     # Assign to class scope
-    #     if pos_invoice_ids[0]:
-    #         self.pos_invoice_id = pos_invoice_ids[0]
-
-    #     return {"pos_invoice_number":self.pos_invoice_id}
-
+    
 
     @mapping
     def total_paid(self, record):
@@ -314,7 +293,10 @@ class SaleOrderImporter(Component):
 
         pos_product_and_variant_tuples = []
         order_rows = record.get("order_rows")
-
+        if not order_rows:
+            pos_sale_order_record = self.client.find("order", record["id"])
+            order_rows = pos_sale_order_record.get("order_rows")
+    
         for order_row in order_rows:
             pos_product_template_id = order_row.get("product")["id"]
             pos_product_variant_id = order_row.get("product")["variant_id"]
