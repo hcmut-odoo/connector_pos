@@ -77,7 +77,7 @@ class PosSaleOrder(models.Model):
             date = {"end": now_fmt}
 
         self.env["pos.sale.order"].import_batch(
-            backend, filters={'date': date}, priority=5, max_retries=0
+            backend, filters={'date': date}, priority=80, max_retries=0
         )
 
         next_check_datetime = now_fmt - timedelta(seconds=10)

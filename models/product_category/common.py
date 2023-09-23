@@ -72,7 +72,7 @@ class PosProductCategory(models.Model):
             date = {'end': now_fmt}
 
         self.env["pos.product.category"].import_batch(
-            backend, filters={'date': date}, priority=10, **kwargs
+            backend, filters={'date': date}, priority=5, **kwargs
         )
 
         backend.import_categories_from_date = now_fmt

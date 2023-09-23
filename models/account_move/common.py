@@ -17,7 +17,6 @@ class AccountMove(models.Model):
 
     def action_post(self):
         so_obj = self.env["pos.sale.order"]
-        line_replacement = {}
         for move in self:
             if move.move_type != "out_invoice":
                 continue
@@ -25,21 +24,19 @@ class AccountMove(models.Model):
             if not sale_order:
                 continue
             sale_order = sale_order[0]
-            discount_product_id = sale_order.backend_id.discount_product_id.id
-            for invoice_line in move.invoice_line_ids:
-                if invoice_line.product_id.id != discount_product_id:
-                    continue
-                amount = invoice_line.price_subtotal
-                partner = move.partner_id.commercial_partner_id
-                refund = self._find_refund(-1 * amount, partner)
-                if refund:
-                    invoice_line.unlink()
-                    line_replacement[move] = refund
 
             pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
             if pos_order_record:
                 backend_id = pos_order_record.backend_id
                 self.env["pos.sale.order"].export_sale_state(backend_id, pos_order_record, "accept")
+
+        # Check duplicate: posted journal entry must have an unique 
+        # sequence number per company. problematic numbers
+        condition = [('name', '=', self.name)]
+        count = self.env['account.move'].search_count(condition)
+        if count > 1 and self.name != "/":
+            self.name = '/'
+            self.env.cr.commit()
 
         result = super().action_post()        
         return result
@@ -58,16 +55,6 @@ class AccountMove(models.Model):
             if not sale_order:
                 continue
             sale_order = sale_order[0]
-            discount_product_id = sale_order.backend_id.discount_product_id.id
-            for invoice_line in move.invoice_line_ids:
-                if invoice_line.product_id.id != discount_product_id:
-                    continue
-                amount = invoice_line.price_subtotal
-                partner = move.partner_id.commercial_partner_id
-                refund = self._find_refund(-1 * amount, partner)
-                if refund:
-                    invoice_line.unlink()
-                    line_replacement[move] = refund
 
             pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
             if pos_order_record:

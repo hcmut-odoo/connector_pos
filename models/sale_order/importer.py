@@ -106,7 +106,7 @@ class SaleImportRule(Component):
         #             % (pos_state_id,)
         #         )
         state = record["status"]
-        if state == "done" or state == "cancel":
+        if state == "cancel":
         # if state not in self.backend_record.importable_order_state_ids:
             raise NothingToDoJob(
                 _(
@@ -202,13 +202,6 @@ class SaleOrderImportMapper(Component):
     @mapping
     def backend_id(self, record):
         return {"backend_id": self.backend_record.id}
-
-    @mapping
-    def total_tax_amount(self, record):
-        
-        tax = float(record["total"])*0.1
-
-        return {"total_amount_tax": tax}
 
     @mapping
     def date_order(self, record):
@@ -356,9 +349,27 @@ class SaleOrderImporter(Component):
         return binding
 
     def _after_import(self, binding):
+        print("_after_import")
         super()._after_import(binding)
         self._add_shipping_line(binding)
         self.warning_line_without_template(binding)
+        self._create_invoice(binding)
+
+    def _create_invoice(self, binding):
+        pso_obj = self.env["pos.sale.order"]
+        pos_record = self.pos_record
+        # so_obj = self.env["sale.order"]
+        
+        # Check status of pos order
+        if pos_record["status"] == "done":
+            pos_sale_order = pso_obj.search([("pos_id", "=", pos_record["id"])])
+            sale_order = pos_sale_order.odoo_id
+            sale_order.action_confirm()
+            try:
+                wiz = self.env["sale.advance.payment.inv"].with_context(active_ids=sale_order.ids).create({"advance_payment_method": "delivered",})
+                res = wiz.create_invoices()
+            except Exception as e:
+                print("can not create invoice", e)
 
     def warning_line_without_template(self, binding):
         if not self.line_template_errors:

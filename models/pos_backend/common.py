@@ -478,23 +478,23 @@ class PosBackend(models.Model):
             import_product_since_date = backend_record.import_products_since
 
             
-            self.env["pos.product.category"].with_delay().import_product_categories(
+            self.env["pos.product.category"].import_product_categories(
                 backend_record, import_category_since_date
             )
 
-            self.env["pos.product.template"].with_delay().import_products(
-                backend_record, import_product_since_date
-            )
-
-            backend_record.env["pos.product.template"].with_delay().import_inventory(
-                backend_record
-            )
-
-            self.env["pos.res.partner"].with_delay().import_customers_since(
+            self.env["pos.res.partner"].import_customers_since(
                 backend_record=backend_record, since_date=import_partner_since_date
             )
 
-            backend_record.env["pos.sale.order"].with_delay().import_orders_since(
+            self.env["pos.product.template"].import_products(
+                backend_record, import_product_since_date
+            )
+
+            backend_record.env["pos.product.template"].import_inventory(
+                backend_record
+            )
+
+            backend_record.env["pos.sale.order"].import_orders_since(
                 backend_record, import_order_since_date
             )
 

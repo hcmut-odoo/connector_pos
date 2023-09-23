@@ -177,7 +177,7 @@ class PosProductTemplate(models.Model):
     def import_inventory(self, backend):
         with backend.work_on("pos._import_stock_available") as work:
             importer = work.component(usage="batch.importer")
-            return importer.run()
+            return importer.run(priority=60)
 
     def export_inventory(self, fields=None):
         """Export the inventory configuration and quantity of a product."""
