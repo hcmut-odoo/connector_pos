@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo noupdate="1">
 
-    <record forcecreate="True" id="ir_cron_import_sale_orders" model="ir.cron">
+    <!-- <record forcecreate="True" id="ir_cron_import_sale_orders" model="ir.cron">
         <field name="name">Pos - Import Sales Orders</field>
         <field name="active" eval="False" />
         <field name="user_id" ref="base.user_root" />
@@ -38,5 +38,5 @@
         <field name="numbercall">-1</field>
         <field name="doall" eval="False" />
         <field name="model_id" ref="connector_pos.model_pos_backend" />
-    </record>
+    </record> -->
 </odoo>
