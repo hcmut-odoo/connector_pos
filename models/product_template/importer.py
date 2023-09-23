@@ -400,12 +400,14 @@ class ProductInventoryBatchImporter(Component):
         records = self.client.list("product_variant", filters)
         for variant in records:
             self._import_record(variant["id"], record=variant, **kwargs)
+
         return [x["id"] for x in records]
     
     def _import_record(self, record_id, record=None, **kwargs):
         """Delay the import of the records"""
         assert record
-        self.env["pos._import_stock_available"].with_delay().import_record(
+        priority = kwargs.pop("priority", None)
+        self.env["pos._import_stock_available"].with_delay(priority=priority).import_record(
             self.backend_record, record_id, record=record, **kwargs
         )
 
@@ -431,10 +433,10 @@ class ProductInventoryImporter(Component):
         product_tmp = self.find_product_template(backend.id, record["product_id"])
 
         if not product_tmp:
-            # print("Not found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
+            print("Not found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
             self._import_dependency(record["product_id"], "pos.product.template")
-        # else:
-            # print("Found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
+        else:
+            print("Found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
 
         if record["id"]:
             self._import_dependency(
@@ -448,7 +450,6 @@ class ProductInventoryImporter(Component):
             ("backend_id", "=", backend_id)
         ])
 
-        # print("find_product_template", pos_product_tmp.id)
         if pos_product_tmp.id:
             return True
         
