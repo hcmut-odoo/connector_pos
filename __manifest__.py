@@ -35,7 +35,6 @@
         "security/ir.model.access.csv",
         "security/pos_security.xml",
         "data/queue_job_data.xml",
-        "data/cron.xml",
         "data/product_decimal_precision.xml",
         "data/ecommerce_data.xml",
         "views/pos_backend_view.xml",
