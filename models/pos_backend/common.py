@@ -3,7 +3,6 @@
 import logging
 
 from odoo import _, api, exceptions, fields, models
-
 from odoo.addons.base.models.res_partner import _tz_get
 from odoo.addons.component.core import Component
 
@@ -219,6 +218,15 @@ class PosBackend(models.Model):
     )
     import_refresh_data_since = fields.Datetime("Import refresh data since")
     
+    @api.constrains('import_routine_data_interval_time')
+    def _check_routine_data_interval_time(self):
+        if self.import_routine_data_interval_time == 0:
+            raise exceptions.UserError(_('Import routine data interval time must be larger than 0.'))
+
+    @api.constrains('import_refresh_data_interval_time')
+    def _check_refresh_data_interval_time(self):
+        if self.import_refresh_data_interval_time == 0:
+            raise exceptions.UserError(_('Import refresh data interval time must be larger than 0.'))
 
     @api.constrains("product_qty_field")
     def check_product_qty_field_dependencies_installed(self):
