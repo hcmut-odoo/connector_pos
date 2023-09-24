@@ -41,6 +41,20 @@ class AccountMove(models.Model):
         result = super().action_post()        
         return result
     
+    def auto_do_post_action(self):
+        # Check duplicate: posted journal entry must have an unique 
+        # sequence number per company. problematic numbers
+        if self.state == "posted" or self.state == "cancel":
+            return
+        
+        condition = [('name', '=', self.name)]
+        count = self.env['account.move'].search_count(condition)
+        if count > 1 and self.name != "/":
+            self.name = '/'
+            
+        result = super().action_post()        
+        return result
+
     def button_draft(self):
         result = super().button_draft()        
         return result
