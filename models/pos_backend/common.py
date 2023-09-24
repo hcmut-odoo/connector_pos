@@ -188,7 +188,7 @@ class PosBackend(models.Model):
         default="qty_available",
         required=True,
     )
-    import_routine_data_refresh_time = fields.Integer(
+    import_refresh_data_interval_time = fields.Integer(
         string='Interval time import refresh data', 
         help='Import refresh data each an interval time',
         default=5
@@ -537,7 +537,7 @@ class PosBackend(models.Model):
     
     def create_import_refresh_data(self):
         for backend_record in self:
-            import_routine_data_refresh_time = backend_record.import_routine_data_refresh_time
+            import_refresh_data_interval_time = backend_record.import_refresh_data_interval_time
             backend_record.created_import_refresh_data = True
 
             cron_record = self.env['ir.cron'].search([('name', '=', 'Pos - Import Refresh')])
@@ -548,7 +548,7 @@ class PosBackend(models.Model):
                     'name': 'Pos - Import Refresh',
                     'active': True,
                     'user_id': self.env.ref('base.user_root').id,
-                    'interval_number': import_routine_data_refresh_time,
+                    'interval_number': import_refresh_data_interval_time,
                     'state': 'code',
                     'code': 'model._scheduler_import_refresh()',
                     'interval_type': 'minutes',
