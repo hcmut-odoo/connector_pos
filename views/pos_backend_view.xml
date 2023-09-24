@@ -104,80 +104,6 @@
                                 />
                             </group>
                         </page>
-                        <page name="import" string="Imports Specific">
-                            <p class="oe_grey oe_inline">
-                                Import specific data of your company
-                            </p>                                                    
-                            <group>
-                                <div>
-                                    <label
-                                        string="Import product categories and products"
-                                        class="oe_inline"
-                                        for="import_products_since"
-                                    />
-                                    <field
-                                        name="import_products_since"
-                                        class="oe_inline"
-                                        nolabel="1"
-                                    />
-                                </div>
-                                <button
-                                    name="import_products"
-                                    type="object"
-                                    class="oe_highlight"
-                                    string="Import in background"
-                                />
-                            </group>
-                            <group>
-                                <span>Import stock quantities</span>
-                                <button
-                                    name="import_stock_qty"
-                                    type="object"
-                                    class="oe_highlight"
-                                    string="Import in background"
-                                />
-                            </group>
-                            <group>
-                                <div>
-                                    <label
-                                        string="Import customer groups and customers since"
-                                        class="oe_inline"
-                                        for="import_partners_since"
-                                    />
-                                    <field
-                                        name="import_partners_since"
-                                        class="oe_inline"
-                                        nolabel="1"
-                                    />
-                                </div>
-                                <button
-                                    name="import_customers_since"
-                                    type="object"
-                                    class="oe_highlight"
-                                    string="Import in background"
-                                />
-                            </group>
-                            <group>
-                                <div>
-                                    <label
-                                        string="Import sale orders since"
-                                        class="oe_inline"
-                                        for="import_orders_since"
-                                    />
-                                    <field
-                                        name="import_orders_since"
-                                        class="oe_inline"
-                                        nolabel="1"
-                                    />
-                                </div>
-                                <button
-                                    name="import_sale_orders"
-                                    type="object"
-                                    class="oe_highlight"
-                                    string="Import in background"
-                                />
-                            </group>
-                        </page>
                         <page name="import_scheduler" string="Import Schedulers">
                             <p class="oe_grey oe_inline">
                                 Automatically import the data needed for the sales flow.
@@ -187,10 +113,10 @@
                                     <label
                                         string="Interval time to import refresh data (minutes)"
                                         class="oe_inline"
-                                        for="import_routine_data_refresh_time"
+                                        for="import_refresh_data_interval_time"
                                     />
                                     <field
-                                        name="import_routine_data_refresh_time"
+                                        name="import_refresh_data_interval_time"
                                         class="oe_inline"
                                         nolabel="1"
                                     />
