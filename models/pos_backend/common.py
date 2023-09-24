@@ -3,7 +3,6 @@
 import logging
 
 from odoo import _, api, exceptions, fields, models
-
 from odoo.addons.base.models.res_partner import _tz_get
 from odoo.addons.component.core import Component
 
@@ -189,6 +188,45 @@ class PosBackend(models.Model):
         default="qty_available",
         required=True,
     )
+    import_routine_data_refresh_time = fields.Integer(
+        string='Interval time import refresh data', 
+        help='Import refresh data each an interval time',
+        default=5
+    )
+    status_import_routine_scheduler = fields.Boolean(
+        string="Active import routine scheduler",
+        default=True
+    )
+    import_routine_data_since = fields.Datetime("Import routine data since")
+    created_import_routine_data = fields.Boolean(
+        string="Created import routine scheduler",
+        default=False
+    )
+
+    import_routine_data_interval_time = fields.Integer(
+        string='Interval time import routine data', 
+        help='Import routine data each an interval time',
+        default=1
+    )
+    status_import_refresh_scheduler = fields.Boolean(
+        string="Active import refresh scheduler",
+        default=True
+    )
+    created_import_refresh_data = fields.Boolean(
+        string="Created import refresh scheduler",
+        default=False
+    )
+    import_refresh_data_since = fields.Datetime("Import refresh data since")
+    
+    @api.constrains('import_routine_data_interval_time')
+    def _check_routine_data_interval_time(self):
+        if self.import_routine_data_interval_time == 0:
+            raise exceptions.UserError(_('Import routine data interval time must be larger than 0.'))
+
+    @api.constrains('import_refresh_data_interval_time')
+    def _check_refresh_data_interval_time(self):
+        if self.import_refresh_data_interval_time == 0:
+            raise exceptions.UserError(_('Import refresh data interval time must be larger than 0.'))
 
     @api.constrains("product_qty_field")
     def check_product_qty_field_dependencies_installed(self):
@@ -469,6 +507,117 @@ class PosBackend(models.Model):
             backend_record.import_payment_mode_since = now_fmt
         return True
     
+    def import_refresh(self):
+        now_fmt = fields.Datetime.now()
+        for backend_record in self:
+            import_category_since_date = backend_record.import_categories_from_date
+            import_partner_since_date = backend_record.import_partners_since
+            import_order_since_date = backend_record.import_orders_since
+            import_product_since_date = backend_record.import_products_since
+            
+            self.env["pos.product.category"].import_product_categories(
+                backend_record, import_category_since_date
+            )
+
+            self.env["pos.res.partner"].import_customers_since(
+                backend_record=backend_record, since_date=import_partner_since_date
+            )
+
+            self.env["pos.product.template"].import_products(
+                backend_record, import_product_since_date
+            )
+
+            backend_record.env["pos.sale.order"].import_orders_since(
+                backend_record, import_order_since_date
+            )
+
+            backend_record.import_refresh_data_since = now_fmt
+        
+        return True
+    
+    def create_import_refresh_data(self):
+        for backend_record in self:
+            import_routine_data_refresh_time = backend_record.import_routine_data_refresh_time
+            backend_record.created_import_refresh_data = True
+
+            cron_record = self.env['ir.cron'].search([('name', '=', 'Pos - Import Refresh')])
+            if cron_record:
+                return True
+            
+            self.env['ir.cron'].create({
+                    'name': 'Pos - Import Refresh',
+                    'active': True,
+                    'user_id': self.env.ref('base.user_root').id,
+                    'interval_number': import_routine_data_refresh_time,
+                    'state': 'code',
+                    'code': 'model._scheduler_import_refresh()',
+                    'interval_type': 'minutes',
+                    'numbercall': -1,
+                    'doall': False,
+                    'model_id': self.env.ref('connector_pos.model_pos_backend').id,
+                })
+        
+        return True
+
+    def create_import_routine_data(self):
+        for backend_record in self:
+            import_routine_data_interval_time = backend_record.import_routine_data_interval_time
+            backend_record.created_import_routine_data = True
+
+            cron_record = self.env['ir.cron'].search([('name', '=', 'Pos - Import Routine')])
+            if cron_record:
+                return True
+
+            self.env['ir.cron'].create({
+                    'name': 'Pos - Import Routine',
+                    'active': True,
+                    'user_id': self.env.ref('base.user_root').id,
+                    'interval_number': import_routine_data_interval_time,
+                    'state': 'code',
+                    'code': 'model._scheduler_import_routine()',
+                    'interval_type': 'days',
+                    'numbercall': -1,
+                    'doall': False,
+                    'model_id': self.env.ref('connector_pos.model_pos_backend').id,
+                })
+
+        return True
+
+    def unactive_import_routine_scheduler(self):
+        for backend_record in self:
+            cron_record = self.env['ir.cron'].search([('cron_name', '=', 'Pos - Import Routine'), ('active', '=', True)])
+            print("unactive_import_routine_scheduler", cron_record)
+            backend_record.status_import_routine_scheduler = False
+            if cron_record:
+                cron_record.active = False
+                self.env.cr.commit()
+
+    def unactive_import_refresh_scheduler(self):
+        for backend_record in self:
+            backend_record.status_import_refresh_scheduler = False
+            cron_record = self.env['ir.cron'].search([('cron_name', '=', 'Pos - Import Refresh'), ('active', '=', True)])
+            print("unactive_import_refresh_scheduler", cron_record)
+            if cron_record:
+                cron_record.active = False 
+                self.env.cr.commit()
+
+    def active_import_refresh_scheduler(self):
+        for backend_record in self:
+            backend_record.status_import_refresh_scheduler = True
+            cron_record = self.env['ir.cron'].search([('cron_name', '=', 'Pos - Import Refresh'), ('active', '=', False)])
+            if cron_record:
+                cron_record.active = True
+                self.env.cr.commit()
+
+    def active_import_routine_scheduler(self):
+        for backend_record in self:            
+            cron_record = self.env['ir.cron'].search([('cron_name', '=', 'Pos - Import Routine'), ('active', '=', False)])
+            print("active_import_routine_scheduler", cron_record)
+            backend_record.status_import_routine_scheduler = True
+            if cron_record:
+                cron_record.active = True  
+                self.env.cr.commit()
+
     def import_all(self):
         now_fmt = fields.Datetime.now()
         for backend_record in self:
@@ -499,7 +648,8 @@ class PosBackend(models.Model):
             )
 
             backend_record.import_all_data_since = now_fmt
-        
+            backend_record.import_routine_data_since = now_fmt
+
         return True
 
     @api.model
@@ -517,6 +667,14 @@ class PosBackend(models.Model):
         :type domain: list or tuple or None
         """
         self.search(domain or []).update_product_stock_qty()
+
+    @api.model
+    def _scheduler_import_refresh(self, domain=None):
+        self.search(domain or []).import_refresh()
+    
+    @api.model
+    def _scheduler_import_routine(self, domain=None):
+        self.search(domain or []).import_all()
 
     @api.model
     def _scheduler_import_sale_orders(self, domain=None):
