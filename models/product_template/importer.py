@@ -433,10 +433,7 @@ class ProductInventoryImporter(Component):
         product_tmp = self.find_product_template(backend.id, record["product_id"])
 
         if not product_tmp:
-            print("Not found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
             self._import_dependency(record["product_id"], "pos.product.template")
-        else:
-            print("Found product template backend_ID:%s productId:%s", backend.id, record["product_id"])
 
         if record["id"]:
             self._import_dependency(

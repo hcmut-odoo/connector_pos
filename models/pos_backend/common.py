@@ -588,7 +588,6 @@ class PosBackend(models.Model):
     def unactive_import_routine_scheduler(self):
         for backend_record in self:
             cron_record = self.env['ir.cron'].search([('cron_name', '=', 'Pos - Import Routine'), ('active', '=', True)])
-            print("unactive_import_routine_scheduler", cron_record)
             backend_record.status_import_routine_scheduler = False
             if cron_record:
                 cron_record.active = False
@@ -598,7 +597,6 @@ class PosBackend(models.Model):
         for backend_record in self:
             backend_record.status_import_refresh_scheduler = False
             cron_record = self.env['ir.cron'].search([('cron_name', '=', 'Pos - Import Refresh'), ('active', '=', True)])
-            print("unactive_import_refresh_scheduler", cron_record)
             if cron_record:
                 cron_record.active = False 
                 self.env.cr.commit()
@@ -614,7 +612,6 @@ class PosBackend(models.Model):
     def active_import_routine_scheduler(self):
         for backend_record in self:            
             cron_record = self.env['ir.cron'].search([('cron_name', '=', 'Pos - Import Routine'), ('active', '=', False)])
-            print("active_import_routine_scheduler", cron_record)
             backend_record.status_import_routine_scheduler = True
             if cron_record:
                 cron_record.active = True  
