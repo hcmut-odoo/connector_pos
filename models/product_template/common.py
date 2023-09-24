@@ -161,15 +161,10 @@ class PosProductTemplate(models.Model):
         else:
             date = {'end': now_fmt}
 
-        self.env["pos.product.category"].import_batch(
-            backend, filters={'date': date}, priority=10, **kwargs
-        )
-
         self.env["pos.product.template"].import_batch(
             backend, filters={'date': date}, priority=15, **kwargs
         )
 
-        backend.import_categories_from_date = now_fmt
         backend.import_products_since = now_fmt
 
         return True
