@@ -16,6 +16,10 @@ from odoo.addons.queue_job.exception import FailedJobError, NothingToDoJob
 
 from ...components.exception import OrderImportRuleRetry
 from ...utils.datetime import DATE_FORMAT
+from ...utils.datetime import (
+    format_date_string,
+    parse_date_string
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -205,13 +209,12 @@ class SaleOrderImportMapper(Component):
 
     @mapping
     def date_order(self, record):
-        date_order = record["created_at"]
-        if self.backend_record.tz:
-            local = pytz.timezone(self.backend_record.tz)
-            naive = fields.Datetime.from_string(date_order)
-            local_dt = local.localize(naive, is_dst=None)
-            date_order = fields.Datetime.to_string(local_dt.astimezone(pytz.utc))
-        
+        if record["created_at"] is None or record["created_at"] == "0000-00-00 00:00:00":
+            date_cred = datetime.datetime.now()
+        else:
+            date_cred = parse_date_string(record["created_at"])
+
+        return {"date_order": format_date_string(date_cred)}
 
     def finalize(self, map_record, values):
         sale_vals = {
