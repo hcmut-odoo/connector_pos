@@ -3,6 +3,7 @@
 import logging
 
 from odoo import _, api, exceptions, fields, models
+
 from odoo.addons.base.models.res_partner import _tz_get
 from odoo.addons.component.core import Component
 
@@ -188,6 +189,7 @@ class PosBackend(models.Model):
         default="qty_available",
         required=True,
     )
+
     import_refresh_data_interval_time = fields.Integer(
         string='Interval time import refresh data', 
         help='Import refresh data each an interval time',
@@ -648,8 +650,7 @@ class PosBackend(models.Model):
             )
 
             backend_record.import_all_data_since = now_fmt
-            backend_record.import_routine_data_since = now_fmt
-
+        
         return True
 
     @api.model
@@ -667,14 +668,6 @@ class PosBackend(models.Model):
         :type domain: list or tuple or None
         """
         self.search(domain or []).update_product_stock_qty()
-
-    @api.model
-    def _scheduler_import_refresh(self, domain=None):
-        self.search(domain or []).import_refresh()
-    
-    @api.model
-    def _scheduler_import_routine(self, domain=None):
-        self.search(domain or []).import_all()
 
     @api.model
     def _scheduler_import_sale_orders(self, domain=None):
