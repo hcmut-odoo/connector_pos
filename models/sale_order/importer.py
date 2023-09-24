@@ -364,11 +364,21 @@ class SaleOrderImporter(Component):
             pos_sale_order = pso_obj.search([("pos_id", "=", pos_record["id"])])
             sale_order = pos_sale_order.odoo_id
             sale_order.action_confirm()
+                        
+            # Create invoice
             try:
                 wiz = self.env["sale.advance.payment.inv"].with_context(active_ids=sale_order.ids).create({"advance_payment_method": "delivered",})
-                res = wiz.create_invoices()
+                wiz.create_invoices()
             except Exception as e:
                 print("Can not create invoice", e)
+
+            # Post action -> confirm invoice
+            try:
+                invoice = sale_order.invoice_ids[0]
+                if invoice.state == "draft":
+                    invoice.with_delay(priority=200).auto_do_post_action()
+            except Exception as e:
+                print("Can not confirm invoice", e)
 
     def warning_line_without_template(self, binding):
         if not self.line_template_errors:
