@@ -617,7 +617,7 @@ class PosBackend(models.Model):
                 cron_record.active = True  
                 self.env.cr.commit()
 
-    def import_all(self):
+    def import_all_action(self):
         now_fmt = fields.Datetime.now()
         for backend_record in self:
             import_category_since_date = backend_record.import_categories_from_date
@@ -649,6 +649,9 @@ class PosBackend(models.Model):
             backend_record.import_all_data_since = now_fmt
         
         return True
+
+    def import_all(self):
+        self.with_delay(priority=0).import_all_action()
 
     @api.model
     def _scheduler_update_product_stock_qty(self, domain=None):
