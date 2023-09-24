@@ -667,6 +667,14 @@ class PosBackend(models.Model):
         self.search(domain or []).update_product_stock_qty()
 
     @api.model
+    def _scheduler_import_refresh(self, domain=None):
+        self.search(domain or []).import_refresh()
+
+    @api.model
+    def _scheduler_import_routine(self, domain=None):
+        self.search(domain or []).import_all()
+
+    @api.model
     def _scheduler_import_sale_orders(self, domain=None):
         """
         Scheduled job method to import sale orders.
