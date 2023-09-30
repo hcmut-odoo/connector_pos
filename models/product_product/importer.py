@@ -334,14 +334,24 @@ class ProductCombinationOptionImporter(Component):
 
     def _import_values(self, attribute_binding):
         option_value = self.pos_record
-        # option_values = [{"id": record["id"]}]
-        # if not isinstance(option_values, list):
-        #     option_values = [option_values]
 
-        # for option_value in option_values:
         self._import_dependency(
             option_value, "pos.product.variant.option.value"
         )
+    
+    def _has_to_skip(self, binding):
+        pv_obj = self.env["product.product"]
+        pos_product_variant_record = self.pos_record
+
+        # Search for a product template by barcode
+        barcode = pos_product_variant_record["variant_barcode"]
+        product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
+
+        if product_variant_mapped:
+            self._import_values(binding)
+            return True
+
+        return False
 
     def _after_import(self, binding):
         super()._after_import(binding)
