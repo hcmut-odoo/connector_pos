@@ -308,15 +308,9 @@ class TemplateMapper(Component):
         return {"company_id": self.backend_record.company_id.id}
 
     @mapping
-    def barcode(self, record):
-        if self.has_variants(record):
-            return {}
+    def pos_barcode(self, record):
         barcode = str(record.get("barcode"))
-        if barcode in ["", "0"]:
-            return {}
-        if self.env["barcode.nomenclature"].check_ean(barcode):
-            return {"barcode": barcode}
-        return {}
+        return {"pos_barcode": barcode}
 
     def _get_tax_ids(self, record):
         binder = self.binder_for("pos.account.tax.group")
