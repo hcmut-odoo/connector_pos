@@ -101,7 +101,7 @@ class ResPartnerImporter(Component):
     def _after_import(self, binding):
         pass
 
-    def _has_to_skip (self, binding):
+    def _has_to_skip(self, binding):
         pos_user_record = self.pos_record
         rp_obj = self.env["res.partner"]
 
@@ -110,7 +110,6 @@ class ResPartnerImporter(Component):
         phone = pos_user_record["phone_number"]
         partner_mapped = rp_obj.search(['|', ("email", "=", email), ("phone", "=", phone)])
 
-        
         if partner_mapped:
             return True
         
