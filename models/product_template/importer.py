@@ -311,7 +311,7 @@ class TemplateMapper(Component):
     def barcode(self, record):
         if self.has_variants(record):
             return {}
-        barcode = str(record.get("id"))
+        barcode = str(record.get("barcode"))
         if barcode in ["", "0"]:
             return {}
         if self.env["barcode.nomenclature"].check_ean(barcode):

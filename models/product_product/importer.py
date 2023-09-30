@@ -231,7 +231,7 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def barcode(self, record):
-        barcode = record.get("barcode") or str(record.get("id"))
+        barcode = record.get("variant_barcode") or str(record.get("id"))
         check_ean = self.env["barcode.nomenclature"].check_ean
         if barcode in ["", "0"]:
             backend_adapter = self.component(
