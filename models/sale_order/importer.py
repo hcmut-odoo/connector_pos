@@ -200,7 +200,7 @@ class SaleOrderImportMapper(Component):
     @mapping
     def partner_id(self, record):
         email = record["email"]
-        phone = record["phone"]
+        phone = record["phone_number"]
 
         odoo_partner_mapped = self.found_partner(phone, email)
         return {"partner_id": odoo_partner_mapped.id}
