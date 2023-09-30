@@ -371,11 +371,10 @@ class SaleOrderImporter(Component):
     def _create_invoice(self, binding):
         pso_obj = self.env["pos.sale.order"]
         pos_record = self.pos_record
-        # so_obj = self.env["sale.order"]
         
         # Check status of pos order
         if pos_record["status"] == "done":
-            pos_sale_order = pso_obj.search([("pos_id", "=", pos_record["id"])])
+            pos_sale_order = pso_obj.search([("id", "=", binding.id)])
             sale_order = pos_sale_order.odoo_id
             sale_order.action_confirm()
                         
