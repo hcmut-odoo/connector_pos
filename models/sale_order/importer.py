@@ -199,9 +199,11 @@ class SaleOrderImportMapper(Component):
 
     @mapping
     def partner_id(self, record):
-        binder = self.binder_for("pos.res.partner")
-        partner = binder.to_internal(record["user_id"], unwrap=True)
-        return {"partner_id": partner.id}
+        email = record["email"]
+        phone = record["phone"]
+
+        odoo_partner_mapped = self.found_partner(phone, email)
+        return {"partner_id": odoo_partner_mapped.id}
 
     @mapping
     def backend_id(self, record):
@@ -215,6 +217,15 @@ class SaleOrderImportMapper(Component):
             date_cred = parse_date_string(record["created_at"])
 
         return {"date_order": format_date_string(date_cred)}
+
+    def found_partner(self, phone, email):
+        rp_obj = self.env["res.partner"]
+
+        # Search for a partner by email or phone
+        partner_mapped = rp_obj.search(['|', ("email", "=", email), ("phone", "=", phone)])
+        if partner_mapped:
+            return partner_mapped
+        return None
 
     def finalize(self, map_record, values):
         sale_vals = {
