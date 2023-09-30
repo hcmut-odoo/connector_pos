@@ -101,6 +101,21 @@ class ResPartnerImporter(Component):
     def _after_import(self, binding):
         pass
 
+    def _has_to_skip (self, binding):
+        pos_user_record = self.pos_record
+        rp_obj = self.env["res.partner"]
+
+        # Search for a partner by email or phone
+        email = pos_user_record["email"]
+        phone = pos_user_record["phone_number"]
+        partner_mapped = rp_obj.search(['|', ("email", "=", email), ("phone", "=", phone)])
+
+        
+        if partner_mapped:
+            return True
+        
+        return False
+
 
 class PartnerBatchImporter(Component):
     _name = "pos.res.partner.batch.importer"

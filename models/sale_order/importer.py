@@ -199,9 +199,11 @@ class SaleOrderImportMapper(Component):
 
     @mapping
     def partner_id(self, record):
-        binder = self.binder_for("pos.res.partner")
-        partner = binder.to_internal(record["user_id"], unwrap=True)
-        return {"partner_id": partner.id}
+        email = record["email"]
+        phone = record["phone_number"]
+
+        odoo_partner_mapped = self.found_partner(phone, email)
+        return {"partner_id": odoo_partner_mapped.id}
 
     @mapping
     def backend_id(self, record):
@@ -215,6 +217,15 @@ class SaleOrderImportMapper(Component):
             date_cred = parse_date_string(record["created_at"])
 
         return {"date_order": format_date_string(date_cred)}
+
+    def found_partner(self, phone, email):
+        rp_obj = self.env["res.partner"]
+
+        # Search for a partner by email or phone
+        partner_mapped = rp_obj.search(['|', ("email", "=", email), ("phone", "=", phone)])
+        if partner_mapped:
+            return partner_mapped
+        return None
 
     def finalize(self, map_record, values):
         sale_vals = {
@@ -360,11 +371,10 @@ class SaleOrderImporter(Component):
     def _create_invoice(self, binding):
         pso_obj = self.env["pos.sale.order"]
         pos_record = self.pos_record
-        # so_obj = self.env["sale.order"]
         
         # Check status of pos order
         if pos_record["status"] == "done":
-            pos_sale_order = pso_obj.search([("pos_id", "=", pos_record["id"])])
+            pos_sale_order = pso_obj.search([("id", "=", binding.id)])
             sale_order = pos_sale_order.odoo_id
             sale_order.action_confirm()
                         
