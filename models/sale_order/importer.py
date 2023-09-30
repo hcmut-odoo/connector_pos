@@ -148,14 +148,20 @@ class SaleOrderImportMapper(Component):
     ]
 
     def _map_child(self, map_record, from_attr, to_attr, model_name):
-
+        print("_map_child map_record", map_record)
+        print("_map_child from_attr", from_attr)
+        print("_map_child to_attr", to_attr)
+        print("_map_child model_name", model_name)
         source = map_record.source
+        print("_map_child source",source)
         # TODO patch ImportMapper in connector to support callable
         if callable(from_attr):
             child_records = from_attr(self, source)
         else:
             child_records = source[from_attr]
 
+
+        print("_map_child child_records",child_records)
         children = []
         for child_record in child_records:
             mapper = self._get_map_child_component(model_name)
@@ -164,7 +170,38 @@ class SaleOrderImportMapper(Component):
             )
             children.extend(items)
 
+        print("_map_child children",children)
+        if not self.validate_children(children=children):
+            children = self.rebuild_children(children=children, order_rows=child_records)
         return children
+
+    def validate_children(self, children):
+        for _, _, sale_order_line in children:
+            if "product_id" not in sale_order_line:
+                return False
+        return True
+    
+    def rebuild_children(self, children, order_rows):
+        print("rebuild_children", children, order_rows)
+        product_ids = []
+        for order_row in order_rows:
+            product = order_row.get("product", {})
+            variant = product.get("variant", {})
+            variant_barcode = variant.get("variant_barcode", None)
+            product = self.find_product(barcode=variant_barcode)
+            product_ids.append(product.id)
+
+        for i, (_, _, sale_order_line) in enumerate(children):
+            sale_order_line["product_id"] = product_ids[i]
+        
+        return children
+
+
+    def find_product(self, barcode):
+        pv_obj = self.env["product.product"]
+        product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
+
+        return product_variant_mapped
 
     def _sale_order_exists(self, name):
         sale_order = self.env["sale.order"].search(
@@ -222,7 +259,7 @@ class SaleOrderImportMapper(Component):
         rp_obj = self.env["res.partner"]
 
         # Search for a partner by email or phone
-        partner_mapped = rp_obj.search(['|', ("email", "=", email), ("phone", "=", phone)])
+        partner_mapped = rp_obj.search([("email", "=", email), ("phone", "=", phone)])
         if partner_mapped:
             return partner_mapped
         return None
@@ -357,6 +394,7 @@ class SaleOrderImporter(Component):
         binding.odoo_id.recompute()
 
     def _create(self, data):
+        print("pos.sale.order.importer _create", data)
         binding = super()._create(data)
         if binding.fiscal_position_id:
             binding.odoo_id._compute_tax_id()

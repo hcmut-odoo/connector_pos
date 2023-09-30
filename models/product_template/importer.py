@@ -673,6 +673,7 @@ class ProductTemplateImporter(Component):
         self._import_dependency(category_id, "pos.product.category")
 
     def _has_to_skip(self, binding):
+        print("_has_to_skip pos.product.template")
         pos_product_template_record = self.pos_record
         ppt_obj = self.env["pos.product.template"]
 

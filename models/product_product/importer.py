@@ -56,34 +56,53 @@ class ProductCombinationImporter(Component):
         super()._after_import(binding)
         # self.import_supplierinfo(binding)
 
-    # def set_variant_images(self, variants):
-    #     backend_adapter = self.component(
-    #         usage="backend.adapter", model_name="pos.product.variant"
-    #     )
-    #     for variant in variants:
-    #         record = backend_adapter.read(variant["id"])
-    #         associations = record.get("associations", {})
-    #         try:
-    #             pos_images = associations.get("images", {}).get(
-    #                 self.backend_record.get_version_pos_key("image"), {}
-    #             )
-    #         except PosWebServiceError:
-    #             # TODO: don't we track anything here? Maybe a checkpoint?
-    #             continue
-    #         binder = self.binder_for("pos.product.image")
-    #         if not isinstance(pos_images, list):
-    #             pos_images = [pos_images]
-    #         if "id" in pos_images[0]:
-    #             images = [
-    #                 binder.to_internal(x.get("id"), unwrap=True) for x in pos_images
-    #             ]
-    #         else:
-    #             continue
-    #         product_binder = self.binder_for("pos.product.variant")
-    #         product = product_binder.to_internal(variant["id"], unwrap=True)
-    #         product.with_context(connector_no_export=True).write(
-    #             {"image_ids": [(6, 0, [x.id for x in images])]}
-    #         )
+    def _has_to_skip(self, binding):
+        print("_has_to_skip pos.product.variant.option.importer")
+        pv_obj = self.env["product.product"]
+
+        # Get product variant record from POS
+        pos_product_variant_record = self.pos_record
+
+        # Search for a product template by barcode
+        barcode = pos_product_variant_record["variant_barcode"]
+        extend_qty = pos_product_variant_record["stock_qty"]
+        product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
+
+        print("product_variant_mapped", product_variant_mapped)
+        # If variant is exist -> only update quantity
+        if product_variant_mapped:
+            self.env["pos.product.variant"].with_delay(priority=150)._update_variant_qty(binding=product_variant_mapped, new_qty=extend_qty)
+            return True
+
+        return False
+
+    # def _update_variant_qty(self, binding, new_qty):
+    #     print("_update_variant_qty binding", binding)
+    #     scpq_obj = self.env["stock.change.product.qty"]
+    #     current_stock_change_product_qty = scpq_obj.search([
+    #         ("product_id", "=", binding.id),
+    #         ("product_tmpl_id", "=", binding.product_tmpl_id.id)
+    #     ])
+
+    #     print("_update_variant_qty current_stock_change_product_qty", current_stock_change_product_qty)
+
+    #     # vals = {
+    #     #     "product_id": binding.id,
+    #     #     "product_tmpl_id": binding.product_tmpl_id.id,
+    #     #     "new_quantity": current_stock_change_product_qty.new_quantity + new_qty,
+    #     # }
+
+    #     new_quantity = current_stock_change_product_qty.new_quantity + new_qty
+    #     current_stock_change_product_qty.new_quantity = new_quantity
+
+    #     # template_qty = self.env["stock.change.product.qty"].write(vals)
+
+        
+    #     # print("_update_variant_qty template_qty", template_qty)
+    #     current_stock_change_product_qty.with_context(
+    #         active_id=binding.id,
+    #         connector_no_export=True,
+    #     ).change_product_qty()
 
     def _import(self, binding, **kwargs):
         # We need to pass the template pos record because we need it
@@ -340,42 +359,8 @@ class ProductCombinationOptionImporter(Component):
         )
     
     def _has_to_skip(self, binding):
-        pv_obj = self.env["product.product"]
-
-        # Get product variant record from POS
-        pos_product_variant_record = self.pos_record
-
-        # Search for a product template by barcode
-        barcode = pos_product_variant_record["variant_barcode"]
-        extend_qty = pos_product_variant_record["stock_qty"]
-        product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
-
-        # If variant is exist -> only update quantity
-        if product_variant_mapped:
-            self._update_variant_qty(binding=product_variant_mapped, new_qty=extend_qty)
-            return True
-
+        print("pos.product.variant.option.importer", self.pos_record)
         return False
-
-    def _update_variant_qty(self, binding, new_qty):
-        scpq_obj = self.env["stock.change.product.qty"]
-        current_stock_change_product_qty = scpq_obj.search([
-            ("product_id", "=", binding.id),
-            ("product_tmpl_id", "=", binding.product_tmpl_id.id)
-        ])
-
-        vals = {
-            "product_id": binding.id,
-            "product_tmpl_id": binding.product_tmpl_id.id,
-            "new_quantity": current_stock_change_product_qty.new_quantity + new_qty,
-        }
-
-        template_qty = self.env["stock.change.product.qty"].create(vals)
-
-        template_qty.with_context(
-            active_id=binding.id,
-            connector_no_export=True,
-        ).change_product_qty()
 
     def _after_import(self, binding):
         super()._after_import(binding)

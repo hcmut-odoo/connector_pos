@@ -144,6 +144,7 @@ class PosSaleOrderLine(models.Model):
 
     @api.model
     def create(self, vals):
+        print("create_order", vals)
         pos_sale_order = self.env["pos.sale.order"].search(
             [("id", "=", vals["pos_order_id"])], limit=1
         )
