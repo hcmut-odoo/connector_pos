@@ -231,17 +231,17 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def barcode(self, record):
-        barcode = record.get("variant_barcode") or str(record.get("id"))
-        check_ean = self.env["barcode.nomenclature"].check_ean
-        if barcode in ["", "0"]:
-            backend_adapter = self.component(
-                usage="backend.adapter", model_name="pos.product.template"
-            )
-            template = backend_adapter.read(record["product_id"])
-            barcode = template.get("barcode") or template.get("id")
-        if barcode and barcode != "0" and check_ean(barcode):
-            return {"barcode": barcode}
-        return {}
+        barcode = record.get("variant_barcode")
+        # check_ean = self.env["barcode.nomenclature"].check_ean
+        # if barcode in ["", "0"]:
+        #     backend_adapter = self.component(
+        #         usage="backend.adapter", model_name="pos.product.template"
+        #     )
+        #     template = backend_adapter.read(record["product_id"])
+        #     barcode = template.get("barcode") or template.get("id")
+        # if barcode and barcode != "0" and check_ean(barcode):
+        #     return {"barcode": barcode}
+        return {"barcode": barcode}
 
     def _get_tax_ids(self, record): # Make default id_tax_rules_group
         product_tmpl_adapter = self.component(
