@@ -160,42 +160,33 @@ class PosProductCombination(models.Model):
     #         importer = work.component(usage="record.importer")
     #         return importer.set_variant_images(variant_ids, **kwargs)
 
-    def _update_variant_qty(self, binding, new_qty):
+    def _update_variant_qty(self, binding, extend_qty):
         print("_update_variant_qty binding", binding)
         scpq_obj = self.env["stock.change.product.qty"]
-        current_stock_change_product_qty = scpq_obj.search([
+        stock_change_product_qty = scpq_obj.search([
             ("product_id", "=", binding.id),
             ("product_tmpl_id", "=", binding.product_tmpl_id.id)
         ])
 
-        print("_update_variant_qty current_stock_change_product_qty.new_quantity", current_stock_change_product_qty.new_quantity)
+        stock_change_product_qty_id = stock_change_product_qty.id
 
-        # vals = {
-        #     "product_id": binding.id,
-        #     "product_tmpl_id": binding.product_tmpl_id.id,
-        #     "new_quantity": current_stock_change_product_qty.new_quantity + new_qty,
-        # }
+        print("_update_variant_qty stock_change_product_qty.new_quantity", stock_change_product_qty.new_quantity)
 
-        new_quantity = current_stock_change_product_qty.new_quantity + new_qty
-        current_stock_change_product_qty.new_quantity = new_quantity
+        vals = {
+            "product_id": binding.id,
+            "product_tmpl_id": binding.product_tmpl_id.id,
+            "new_quantity": stock_change_product_qty.new_quantity + extend_qty,
+        }
 
-        print("_update_variant_qty current_stock_change_product_qty", new_qty)
-        # template_qty = self.env["stock.change.product.qty"].write(vals)
-
+        print("_update_variant_qty extend_qty", extend_qty)
+        self.env["stock.change.product.qty"].write(vals)
         
-        # print("_update_variant_qty template_qty", template_qty)
+        current_stock_change_product_qty = self.env["stock.change.product.qty"].browse(stock_change_product_qty_id)
+        print("_update_variant_qty current_stock_change_product_qty", current_stock_change_product_qty.new_quantity)
         current_stock_change_product_qty.with_context(
             active_id=binding.id,
             connector_no_export=True,
         ).change_product_qty()
-
-        after_current_stock_change_product_qty = scpq_obj.search([
-            ("product_id", "=", binding.id),
-            ("product_tmpl_id", "=", binding.product_tmpl_id.id)
-        ])
-
-        print("_update_variant_qty current_stock_change_product_qty", after_current_stock_change_product_qty.new_quantity)
-
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
