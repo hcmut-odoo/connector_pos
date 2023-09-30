@@ -680,11 +680,11 @@ class ProductTemplateImporter(Component):
 
     def _has_to_skip(self, binding):
         pos_product_template_record = self.pos_record
-        pt_obj = self.env["product.template"]
+        ppt_obj = self.env["pos.product.template"]
 
         # Search for a product template by barcode
         barcode = pos_product_template_record["barcode"]
-        product_template_mapped = pt_obj.search([("barcode", "=", barcode)])
+        product_template_mapped = ppt_obj.search([("pos_barcode", "=", barcode)])
 
         if product_template_mapped:
             self.import_variants()
