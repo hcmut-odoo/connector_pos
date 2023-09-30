@@ -231,7 +231,7 @@ class ProductCombinationMapper(Component):
 
     @mapping
     def barcode(self, record):
-        barcode = record.get("barcode") or str(record.get("id"))
+        barcode = record.get("variant_barcode") or str(record.get("id"))
         check_ean = self.env["barcode.nomenclature"].check_ean
         if barcode in ["", "0"]:
             backend_adapter = self.component(
@@ -334,14 +334,48 @@ class ProductCombinationOptionImporter(Component):
 
     def _import_values(self, attribute_binding):
         option_value = self.pos_record
-        # option_values = [{"id": record["id"]}]
-        # if not isinstance(option_values, list):
-        #     option_values = [option_values]
 
-        # for option_value in option_values:
         self._import_dependency(
             option_value, "pos.product.variant.option.value"
         )
+    
+    def _has_to_skip(self, binding):
+        pv_obj = self.env["product.product"]
+
+        # Get product variant record from POS
+        pos_product_variant_record = self.pos_record
+
+        # Search for a product template by barcode
+        barcode = pos_product_variant_record["variant_barcode"]
+        extend_qty = pos_product_variant_record["stock_qty"]
+        product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
+
+        # If variant is exist -> only update quantity
+        if product_variant_mapped:
+            self._update_variant_qty(binding=product_variant_mapped, new_qty=extend_qty)
+            return True
+
+        return False
+
+    def _update_variant_qty(self, binding, new_qty):
+        scpq_obj = self.env["stock.change.product.qty"]
+        current_stock_change_product_qty = scpq_obj.search([
+            ("product_id", "=", binding.id),
+            ("product_tmpl_id", "=", binding.product_tmpl_id.id)
+        ])
+
+        vals = {
+            "product_id": binding.id,
+            "product_tmpl_id": binding.product_tmpl_id.id,
+            "new_quantity": current_stock_change_product_qty.new_quantity + new_qty,
+        }
+
+        template_qty = self.env["stock.change.product.qty"].create(vals)
+
+        template_qty.with_context(
+            active_id=binding.id,
+            connector_no_export=True,
+        ).change_product_qty()
 
     def _after_import(self, binding):
         super()._after_import(binding)

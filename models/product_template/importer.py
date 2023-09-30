@@ -311,7 +311,7 @@ class TemplateMapper(Component):
     def barcode(self, record):
         if self.has_variants(record):
             return {}
-        barcode = str(record.get("id"))
+        barcode = str(record.get("barcode"))
         if barcode in ["", "0"]:
             return {}
         if self.env["barcode.nomenclature"].check_ean(barcode):
@@ -677,6 +677,20 @@ class ProductTemplateImporter(Component):
         category_id = record.get("category_id")    
 
         self._import_dependency(category_id, "pos.product.category")
+
+    def _has_to_skip(self, binding):
+        pos_product_template_record = self.pos_record
+        pt_obj = self.env["product.template"]
+
+        # Search for a product template by barcode
+        barcode = pos_product_template_record["barcode"]
+        product_template_mapped = pt_obj.search([("barcode", "=", barcode)])
+
+        if product_template_mapped:
+            self.import_variants()
+            return True
+
+        return False
 
 
 class ProductTemplateBatchImporter(Component):
