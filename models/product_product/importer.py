@@ -222,9 +222,9 @@ class ProductCombinationMapper(Component):
         return {"default_code": current_code}
 
     @mapping
-    def barcode(self, record):
-        barcode = record.get("variant_barcode")
-        return {"barcode": barcode}
+    def variant_barcode(self, record):
+        variant_barcode = record.get("variant_barcode")
+        return {"variant_barcode": variant_barcode}
 
     def _get_tax_ids(self, record): # Make default id_tax_rules_group
         product_tmpl_adapter = self.component(

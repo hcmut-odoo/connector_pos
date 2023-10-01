@@ -139,6 +139,7 @@ class PosProductCombination(models.Model):
         string="Computed Quantity", help="Last computed quantity to send on Pos."
     )
     reference = fields.Char(string="Original reference")
+    variant_barcode = fields.Char(string="Pos variant barcode")
 
     def export_inventory(self, fields=None):
         """Export the inventory configuration and quantity of a product."""
