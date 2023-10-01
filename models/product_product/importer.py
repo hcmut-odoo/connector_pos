@@ -65,14 +65,14 @@ class ProductCombinationImporter(Component):
 
         # Search for a product template by barcode
         barcode = pos_product_variant_record["variant_barcode"]
-        extend_qty = pos_product_variant_record["stock_qty"]
+        # extend_qty = pos_product_variant_record["stock_qty"]
         product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
 
         print("product_variant_mapped", product_variant_mapped)
         # If variant is exist -> only update quantity
         if product_variant_mapped:
-            print("_has_to_skip and increase qty at variant",product_variant_mapped)
-            self.env["pos.product.variant"].with_delay(priority=150)._update_variant_qty(binding=product_variant_mapped, extend_qty=extend_qty)
+            # print("_has_to_skip and increase qty at variant",product_variant_mapped)
+            # self.env["pos.product.variant"].with_delay(priority=150)._update_variant_qty(binding=product_variant_mapped, extend_qty=extend_qty)
             return True
 
         return False
