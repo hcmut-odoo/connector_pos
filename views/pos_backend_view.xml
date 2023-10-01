@@ -104,7 +104,10 @@
                                 />
                             </group>
                         </page>
-                        <page string="Export">
+                        <page name="export" string="Export">
+                            <p class="oe_grey oe_inline">
+                                Export quantity to CMS-Ecommerce.
+                            </p>
                             <group>
                                 <span>Export stock quantities</span>
                                 <button

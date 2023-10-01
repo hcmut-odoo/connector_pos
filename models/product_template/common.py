@@ -177,10 +177,12 @@ class PosProductTemplate(models.Model):
     def export_inventory(self, fields=None):
         """Export the inventory configuration and quantity of a product."""
         backend = self.backend_id
-        export_record_ids = self.search([("backend_id")])
-        with backend.work_on("pos.product.template") as work:
-            exporter = work.component(usage="inventory.exporter")
-            return exporter.run(self, fields,priority=60)
+        export_record_ids = self.search([("backend_id","=",backend.id)]).ids
+        print("template export_inventory", export_record_ids)
+        for export_record_id in export_record_ids:
+            with backend.work_on("pos.product.template") as work:
+                exporter = work.component(usage="inventory.exporter")
+                return exporter.run(self({"id":export_record_id}), fields,priority=60)
 
     def export_product_quantities(self, backend=None):
         self.search([("backend_id", "=", backend.id)]).recompute_pos_qty()
