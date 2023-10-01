@@ -93,22 +93,7 @@ class SaleImportRule(Component):
         we check if current order is in the list.
         If not, the job fails gracefully.
         """
-        # if self.backend_record.importable_order_state_ids:
-        #     pos_state_id = record["id"]
-        #     state = self.binder_for("pos.sale.order.state").to_internal(
-        #         pos_state_id, unwrap=1
-        #     )
-        #     if not state:
-        #         raise FailedJobError(
-        #             _(
-        #                 "The configuration is missing "
-        #                 "for sale order state with POS ID=%s.\n\n"
-        #                 "Resolution:\n"
-        #                 " - Use the automatic import in 'Connectors > Pos "
-        #                 "Backends', button 'Synchronize base data'."
-        #             )
-        #             % (pos_state_id,)
-        #         )
+
         state = record["status"]
         if state == "cancel":
         # if state not in self.backend_record.importable_order_state_ids:
@@ -123,14 +108,12 @@ class SaleImportRule(Component):
 
 class SaleOrderImportMapper(Component):
     _name = "pos.sale.order.mapper"
-    # _inherit = ["pos.adapter", "pos.import.mapper"]
     _inherit = ["pos.import.mapper","pos.adapter"]
     _apply_on = "pos.sale.order"
 
     direct = [
         ("id", "pos_invoice_number"),
         ("delivery_phone", "pos_delivery_number"),
-        # ("total_paid", "total_amount"),
     ]
 
     def _get_sale_order_lines(self, record):
@@ -314,7 +297,6 @@ class SaleOrderImportMapper(Component):
 class SaleOrderImporter(Component):
     _name = "pos.sale.order.importer"
     _inherit = ["pos.importer", "pos.adapter", "base.pos.connector"]
-    # _inherit = ["pos.importer"]
     _apply_on = "pos.sale.order"
 
     def __init__(self, environment):
@@ -483,16 +465,19 @@ class SaleOrderLineMapper(Component):
 
     @mapping
     def product_id(self, record):
-        binder = self.binder_for("pos.product.template")
-        template = binder.to_internal(record["product"]["id"], unwrap=True)
+        pos_product_record = record["product"]
+        pos_variant_record = pos_product_record["variant"]
+        variant_barcode = pos_variant_record["variant_barcode"]
         product = self.env["product.product"].search(
             [
-                ("product_tmpl_id", "=", template.id)
+                ("barcode", "=", variant_barcode)
             ],
             limit=1,
         )
+
         if not product:
             return {}
+
         return {"product_id": product.id}
 
     def _find_tax(self, pos_tax_id):
