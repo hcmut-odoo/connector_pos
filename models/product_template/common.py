@@ -125,6 +125,7 @@ class PosProductTemplate(models.Model):
         default=True,
     )
     show_price = fields.Boolean(string="Display Price", default=True)
+    pos_barcode = fields.Char(string="Pos barcode")
     variants_ids = fields.One2many(
         comodel_name="pos.product.variant",
         inverse_name="main_template_id",

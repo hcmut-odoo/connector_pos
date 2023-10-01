@@ -139,6 +139,7 @@ class PosProductCombination(models.Model):
         string="Computed Quantity", help="Last computed quantity to send on Pos."
     )
     reference = fields.Char(string="Original reference")
+    variant_barcode = fields.Char(string="Pos variant barcode")
 
     def export_inventory(self, fields=None):
         """Export the inventory configuration and quantity of a product."""
@@ -160,6 +161,21 @@ class PosProductCombination(models.Model):
     #         importer = work.component(usage="record.importer")
     #         return importer.set_variant_images(variant_ids, **kwargs)
 
+    def _update_variant_qty(self, binding, extend_qty):
+        print("_update_variant_qty binding", binding)
+
+        vals = {
+            "product_id": binding.id,
+            "product_tmpl_id": binding.product_tmpl_id.id,
+            "new_quantity": extend_qty,
+        }
+
+        template_qty = self.env["stock.change.product.qty"].create(vals)
+
+        template_qty.with_context(
+            active_id=binding.id,
+            connector_no_export=True,
+        ).change_product_qty()
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
