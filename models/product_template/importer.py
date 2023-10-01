@@ -422,29 +422,25 @@ class ProductInventoryImporter(Component):
 
     def _import_dependencies(self):
         """Import the dependencies for the record"""
-        record = self.pos_record
-        backend = self.backend_record
-        product_tmp = self.find_product_template(backend.id, record["product_id"])
+        pos_product_variant_record = self.pos_record
+        variant_barcode = pos_product_variant_record["variant_barcode"]
+        pos_product_template_id = pos_product_variant_record["product_id"] 
+        product_tmpl = self.find_product_template(variant_barcode=variant_barcode)
 
-        if not product_tmp:
-            self._import_dependency(record["product_id"], "pos.product.template")
-
-        if record["id"]:
+        if not product_tmpl:
+            self._import_dependency(pos_product_template_id, "pos.product.template")
             self._import_dependency(
-                record, "pos.product.variant"
+                pos_product_variant_record, "pos.product.variant"
             )
 
-    def find_product_template(self, backend_id, product_tmp_id):
-        pr_obj = self.env["pos.product.template"]
-        pos_product_tmp = pr_obj.search([
-            ("pos_id", "=", product_tmp_id),
-            ("backend_id", "=", backend_id)
-        ])
+    def find_product_template(self, variant_barcode):
+        product = self.env["product.product"].search([("barcode", "=", variant_barcode)])
+        product_tmpl = product.product_tmpl_id
 
-        if pos_product_tmp.id:
-            return True
+        if product_tmpl:
+            return product_tmpl
         
-        return False
+        return None
 
     def run(self, pos_id, record=None, **kwargs):
         assert record
