@@ -446,6 +446,10 @@ class PosBackend(models.Model):
             )
         return True
 
+    def backend_export_quantity(self, barcode, new_qty):
+        for backend_record in self:
+            backend_record.env["pos.product.variant"].export_quantity(backend=backend_record, barcode=barcode, new_qty=new_qty)
+
     def import_stock_qty(self):
         """
         Import stock quantities from the POS backend.
