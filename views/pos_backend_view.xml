@@ -104,6 +104,17 @@
                                 />
                             </group>
                         </page>
+                        <page string="Export">
+                            <group>
+                                <span>Export stock quantities</span>
+                                <button
+                                    name="export_stock_qty"
+                                    type="object"
+                                    class="oe_highlight"
+                                    string="Export quantity to CMS-Ecommerce"
+                                />
+                            </group>
+                        </page>
                         <page name="import_scheduler" string="Import Schedulers">
                             <p class="oe_grey oe_inline">
                                 Automatically import the data needed for the sales flow.

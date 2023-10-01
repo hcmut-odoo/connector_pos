@@ -462,6 +462,23 @@ class PosBackend(models.Model):
                 backend_record
             )
         return True
+    
+    def export_stock_qty(self):
+        """
+        Import stock quantities from the POS backend.
+
+        This method exports the stock quantities from the POS backend. 
+        It calls the `export_inventory` method of the `pos.product.template` 
+        model with a delay to perform the import.
+
+        :return: True if the import process is initiated successfully.
+        :rtype: bool
+        """
+        for backend_record in self:
+            backend_record.env["pos.product.template"].with_delay().export_inventory(
+                backend_record
+            )
+        return True
 
     def import_sale_orders(self):
         """

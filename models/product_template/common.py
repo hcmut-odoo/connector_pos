@@ -177,9 +177,10 @@ class PosProductTemplate(models.Model):
     def export_inventory(self, fields=None):
         """Export the inventory configuration and quantity of a product."""
         backend = self.backend_id
+        export_record_ids = self.search([("backend_id")])
         with backend.work_on("pos.product.template") as work:
             exporter = work.component(usage="inventory.exporter")
-            return exporter.run(self, fields)
+            return exporter.run(self, fields,priority=60)
 
     def export_product_quantities(self, backend=None):
         self.search([("backend_id", "=", backend.id)]).recompute_pos_qty()
@@ -208,20 +209,12 @@ class ProductInventoryAdapter(Component):
             filters,
             quantity,
         )
-
+        
     @retryable_error
     def export_quantity_url(self, filters, quantity, client=None):
         if client is None:
             client = self.client
-        response = client.search(self._pos_model, filters)
-        for stock_id in response:
-            res = client.get(self._pos_model, stock_id)
-            first_key = list(res)[0]
-            stock = res[first_key]
-            stock["quantity"] = int(quantity["quantity"])
-            if "out_of_stock" in quantity:
-                stock["out_of_stock"] = int(quantity["out_of_stock"])
-            client.edit(self._pos_model, {self._export_node_name: stock})
+        client.edit(self._pos_model, content={"stock_qty": quantity["quantity"]}, options={"id": filters["id"]})
 
 
 class PosProductQuantityListener(Component):

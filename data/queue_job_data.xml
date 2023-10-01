@@ -122,4 +122,25 @@
         <field name="channel_id" ref="connector_pos.channel_pos_import" />
     </record>
 
+    <record id="job_function_pos_export_inventory" model="queue.job.function">
+        <field
+            name="model_id"
+            ref="connector_pos.model_pos_product_variant"
+        />
+        <field name="method">export_inventory</field>
+        <field name="channel_id" ref="connector_pos.channel_pos_export" />
+    </record>
+
+    <record
+        id="job_function_pos_export_product_inventory"
+        model="queue.job.function"
+    >
+        <field
+            name="model_id"
+            ref="connector_pos.model_pos_product_template"
+        />
+        <field name="method">export_inventory</field>
+        <field name="channel_id" ref="connector_pos.channel_pos_export" />
+    </record>
+
 </odoo>
