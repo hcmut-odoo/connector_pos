@@ -162,23 +162,16 @@ class PosProductCombination(models.Model):
 
     def _update_variant_qty(self, binding, extend_qty):
         print("_update_variant_qty binding", binding)
-        scpq_obj = self.env["stock.change.product.qty"]
-        stock_change_product_qty = scpq_obj.search([
-            ("product_id", "=", binding.id),
-            ("product_tmpl_id", "=", binding.product_tmpl_id.id)
-        ])
 
-        stock_change_product_qty_id = stock_change_product_qty.id
+        vals = {
+            "product_id": binding.id,
+            "product_tmpl_id": binding.product_tmpl_id.id,
+            "new_quantity": extend_qty,
+        }
 
-        print("_update_variant_qty stock_change_product_qty.new_quantity", stock_change_product_qty.new_quantity)
-        # total_qty = stock_change_product_qty.new_quantity + extend_qty
-        # print("total_qty", total_qty)
+        template_qty = self.env["stock.change.product.qty"].create(vals)
 
-        stock_change_product_qty.write({"new_quantity": extend_qty})
-        
-        current_stock_change_product_qty = scpq_obj.browse(stock_change_product_qty_id)
-        print("_update_variant_qty current_stock_change_product_qty", current_stock_change_product_qty.new_quantity)
-        current_stock_change_product_qty.with_context(
+        template_qty.with_context(
             active_id=binding.id,
             connector_no_export=True,
         ).change_product_qty()
