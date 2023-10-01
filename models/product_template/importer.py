@@ -418,7 +418,14 @@ class ProductInventoryImporter(Component):
         record = self.pos_record
         binder = self.binder_for("pos.product.variant")
 
-        return binder.to_internal(record["id"])
+        # Try to find product if it was mapped
+        variant_barcode = record["variant_barcode"]
+        product = self.env["product.product"].search([("barcode", "=", variant_barcode)])
+        
+        if not product:
+            return binder.to_internal(record["id"])
+        
+        return product
 
     def _import_dependencies(self):
         """Import the dependencies for the record"""
