@@ -77,34 +77,6 @@ class ProductCombinationImporter(Component):
 
         return False
 
-    # def _update_variant_qty(self, binding, new_qty):
-    #     print("_update_variant_qty binding", binding)
-    #     scpq_obj = self.env["stock.change.product.qty"]
-    #     current_stock_change_product_qty = scpq_obj.search([
-    #         ("product_id", "=", binding.id),
-    #         ("product_tmpl_id", "=", binding.product_tmpl_id.id)
-    #     ])
-
-    #     print("_update_variant_qty current_stock_change_product_qty", current_stock_change_product_qty)
-
-    #     # vals = {
-    #     #     "product_id": binding.id,
-    #     #     "product_tmpl_id": binding.product_tmpl_id.id,
-    #     #     "new_quantity": current_stock_change_product_qty.new_quantity + new_qty,
-    #     # }
-
-    #     new_quantity = current_stock_change_product_qty.new_quantity + new_qty
-    #     current_stock_change_product_qty.new_quantity = new_quantity
-
-    #     # template_qty = self.env["stock.change.product.qty"].write(vals)
-
-        
-    #     # print("_update_variant_qty template_qty", template_qty)
-    #     current_stock_change_product_qty.with_context(
-    #         active_id=binding.id,
-    #         connector_no_export=True,
-    #     ).change_product_qty()
-
     def _import(self, binding, **kwargs):
         # We need to pass the template pos record because we need it
         # for variant mapper
@@ -252,15 +224,6 @@ class ProductCombinationMapper(Component):
     @mapping
     def barcode(self, record):
         barcode = record.get("variant_barcode")
-        # check_ean = self.env["barcode.nomenclature"].check_ean
-        # if barcode in ["", "0"]:
-        #     backend_adapter = self.component(
-        #         usage="backend.adapter", model_name="pos.product.template"
-        #     )
-        #     template = backend_adapter.read(record["product_id"])
-        #     barcode = template.get("barcode") or template.get("id")
-        # if barcode and barcode != "0" and check_ean(barcode):
-        #     return {"barcode": barcode}
         return {"barcode": barcode}
 
     def _get_tax_ids(self, record): # Make default id_tax_rules_group
