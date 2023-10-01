@@ -682,7 +682,7 @@ class ProductTemplateImporter(Component):
         product_template_mapped = ppt_obj.search([("pos_barcode", "=", barcode)])
 
         if product_template_mapped:
-            self.import_variants()
+            # self.import_variants()
             return True
 
         return False

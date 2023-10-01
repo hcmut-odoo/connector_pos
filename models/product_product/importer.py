@@ -71,7 +71,8 @@ class ProductCombinationImporter(Component):
         print("product_variant_mapped", product_variant_mapped)
         # If variant is exist -> only update quantity
         if product_variant_mapped:
-            self.env["pos.product.variant"].with_delay(priority=150)._update_variant_qty(binding=product_variant_mapped, new_qty=extend_qty)
+            print("_has_to_skip and increase qty at variant",product_variant_mapped)
+            self.env["pos.product.variant"].with_delay(priority=150)._update_variant_qty(binding=product_variant_mapped, extend_qty=extend_qty)
             return True
 
         return False

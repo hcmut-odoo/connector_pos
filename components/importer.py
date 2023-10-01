@@ -47,6 +47,7 @@ class PosBaseImporter(AbstractComponent):
         :type always: bool
         :param kwargs: Additional keyword arguments passed to the importer.
         """
+        print("import dependency", binding_model, pos_id)
         if not pos_id:
             return
         if isinstance(pos_id, dict):
