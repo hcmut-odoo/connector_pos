@@ -171,10 +171,10 @@ class PosProductCombination(models.Model):
         stock_change_product_qty_id = stock_change_product_qty.id
 
         print("_update_variant_qty stock_change_product_qty.new_quantity", stock_change_product_qty.new_quantity)
-        total_qty = stock_change_product_qty.new_quantity + extend_qty
-        print("total_qty", total_qty)
+        # total_qty = stock_change_product_qty.new_quantity + extend_qty
+        # print("total_qty", total_qty)
 
-        stock_change_product_qty.write({"new_quantity": total_qty})
+        stock_change_product_qty.write({"new_quantity": extend_qty})
         
         current_stock_change_product_qty = scpq_obj.browse(stock_change_product_qty_id)
         print("_update_variant_qty current_stock_change_product_qty", current_stock_change_product_qty.new_quantity)
