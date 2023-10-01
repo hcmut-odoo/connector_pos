@@ -57,7 +57,7 @@ class ProductCombinationImporter(Component):
         # self.import_supplierinfo(binding)
 
     def _has_to_skip(self, binding):
-        print("_has_to_skip pos.product.variant.option.importer")
+        # print("_has_to_skip pos.product.variant.option.importer")
         pv_obj = self.env["product.product"]
 
         # Get product variant record from POS
@@ -68,7 +68,7 @@ class ProductCombinationImporter(Component):
         # extend_qty = pos_product_variant_record["stock_qty"]
         product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
 
-        print("product_variant_mapped", product_variant_mapped)
+        # print("product_variant_mapped", product_variant_mapped)
         # If variant is exist -> only update quantity
         if product_variant_mapped:
             # print("_has_to_skip and increase qty at variant",product_variant_mapped)
@@ -226,6 +226,12 @@ class ProductCombinationMapper(Component):
         variant_barcode = record.get("variant_barcode")
         return {"variant_barcode": variant_barcode}
 
+    @mapping
+    def barcode(self, record):
+        variant_barcode = record.get("variant_barcode")
+        return {"barcode": variant_barcode}
+
+
     def _get_tax_ids(self, record): # Make default id_tax_rules_group
         product_tmpl_adapter = self.component(
             usage="backend.adapter", model_name="pos.product.template"
@@ -323,7 +329,7 @@ class ProductCombinationOptionImporter(Component):
         )
     
     def _has_to_skip(self, binding):
-        print("pos.product.variant.option.importer", self.pos_record)
+        # print("pos.product.variant.option.importer", self.pos_record)
         return False
 
     def _after_import(self, binding):

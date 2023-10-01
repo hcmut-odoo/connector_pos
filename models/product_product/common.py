@@ -162,7 +162,7 @@ class PosProductCombination(models.Model):
     #         return importer.set_variant_images(variant_ids, **kwargs)
 
     def _update_variant_qty(self, binding, extend_qty):
-        print("_update_variant_qty binding", binding)
+        # print("_update_variant_qty binding", binding)
 
         vals = {
             "product_id": binding.id,
@@ -176,6 +176,11 @@ class PosProductCombination(models.Model):
             active_id=binding.id,
             connector_no_export=True,
         ).change_product_qty()
+    
+    def export_quantity(self, backend, bardcode, new_qty):
+        with backend.work_on(self._name) as work:
+            exporter = work.component(usage="product.quantity.exporter")
+            exporter.run(bardcode, new_qty)
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
@@ -246,6 +251,12 @@ class ProductCombinationAdapter(Component):
     _pos_model = "product_variant"
     _export_node_name = "product_variant"
 
+    def update_new_quantity(self, barcode, new_qty):
+        return self.client.edit(
+            "product_variant", 
+            content={"stock_qty": new_qty},
+            options={"variant_barcode": barcode}
+        )
 
 class ProductCombinationOptionAdapter(Component):
     _name = "pos.product.variant.option.adapter"
