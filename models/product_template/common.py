@@ -204,26 +204,10 @@ class ProductInventoryAdapter(Component):
     def get(self, options=None):
         return self.client.get(self._pos_model, options=options)
 
-    def export_quantity(self, filters, quantity):
-        self.export_quantity_url(
-            filters,
-            quantity,
-        )
-
-    @retryable_error
-    def export_quantity_url(self, filters, quantity, client=None):
-        if client is None:
-            client = self.client
-        response = client.search(self._pos_model, filters)
-        for stock_id in response:
-            res = client.get(self._pos_model, stock_id)
-            first_key = list(res)[0]
-            stock = res[first_key]
-            stock["quantity"] = int(quantity["quantity"])
-            if "out_of_stock" in quantity:
-                stock["out_of_stock"] = int(quantity["out_of_stock"])
-            client.edit(self._pos_model, {self._export_node_name: stock})
-
+    def export_quantity(self, backend, barcode, new_qty):
+        with backend.work_on("pos.product.variant") as work:
+            exporter = work.component(usage="product.quantity.exporter")
+            exporter.run(barcode, new_qty)
 
 class PosProductQuantityListener(Component):
     _name = "pos.product.quantity.listener"
