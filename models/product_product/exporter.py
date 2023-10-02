@@ -18,27 +18,27 @@ class ProductQuantityExporter(Component):
     def run(self, barcode, new_qty, **kwargs):
         try:
             response = self.backend_adapter.update_new_quantity(barcode=barcode, new_qty=new_qty)
-            sussess = response.get("success")
-            data = response.get("data")
-            if not sussess:
-                message = data.get("variant_barcode")
-                if message[0] == "The selected variant barcode is invalid.":
-                    backend = kwargs.get("backend")
-                    pos_product_variant = self.env["pos.product.product"].search([("variant_barcode", "=", barcode)])
-                    warehouse_record = self.env["stock.warehouse"].search([("id", "=", backend.warehouse_id.id)])
-                    stock_record = self.env["stock.quant"].search([
-                        ("product_id", "=", pos_product_variant.odoo_id.id),
-                        ("location_id","=", warehouse_record.lot_stock_id.id)]
-                    )
-                    data = {
-                        "product_id": pos_product_variant.main_template_id.id,
-                        "variant_barcode": barcode,
-                        "size": pos_product_variant.size,
-                        "extend_price": pos_product_variant.odoo_id.impact_price,
-                        "stock_qty": stock_record.quantity
-                    }
+            # sussess = response.get("success")
+            # data = response.get("data")
+            # if not sussess:
+            #     message = data.get("variant_barcode")
+                # if message[0] == "The selected variant barcode is invalid.":
+                #     backend = kwargs.get("backend")
+                #     pos_product_variant = self.env["pos.product.product"].search([("variant_barcode", "=", barcode)])
+                #     warehouse_record = self.env["stock.warehouse"].search([("id", "=", backend.warehouse_id.id)])
+                #     stock_record = self.env["stock.quant"].search([
+                #         ("product_id", "=", pos_product_variant.odoo_id.id),
+                #         ("location_id","=", warehouse_record.lot_stock_id.id)]
+                #     )
+                #     data = {
+                #         "product_id": pos_product_variant.main_template_id.id,
+                #         "variant_barcode": barcode,
+                #         "size": pos_product_variant.size,
+                #         "extend_price": pos_product_variant.odoo_id.impact_price,
+                #         "stock_qty": stock_record.quantity
+                #     }
 
-                    self.export_variant(data=data, backend=backend)
+                #     self.export_variant(data=data, backend=backend)
         
         except Exception as e:
             print("Response: ", e)
