@@ -140,6 +140,7 @@ class PosProductCombination(models.Model):
     )
     reference = fields.Char(string="Original reference")
     variant_barcode = fields.Char(string="Pos variant barcode")
+    size = fields.Char(string="Pos variant size")
 
     @api.model
     def export_product_quantities(self, backend):
@@ -204,6 +205,13 @@ class PosProductCombination(models.Model):
                 barcode=variant_record.variant_barcode,
                 new_qty=new_qty
             )
+    
+    def export_product_variant(self, backend, data):
+        """Export the inventory configuration and quantity of a product."""
+        print("export_product_variant",  backend)
+        with backend.work_on(self._name) as work:
+                exporter = work.component(usage="product.quantity.exporter")
+                exporter.with_delay(priority=40).export_variant(data=data)
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
@@ -281,10 +289,22 @@ class ProductCombinationAdapter(Component):
             options={"variant_barcode": barcode}
         )
 
-        # if result["message"] == "Validation errors":
-        #     pass
-        # else:
         return result
+
+    def export_new_variant(self, data):
+        content = {
+            "product_id": data["product_id"],
+            "variant_barcode": data["variant_barcode"],
+            "size": data["size"],
+            "extend_price": int(data["extend_price"]),
+            "stock_qty": int(data["stock_qty"]),
+        }
+
+        try:
+            response = self.client.add(self._pos_model, content=content, options={})
+            return response
+        except Exception as e:
+            print("Response:", e)
 
 class ProductCombinationOptionAdapter(Component):
     _name = "pos.product.variant.option.adapter"
