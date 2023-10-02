@@ -185,6 +185,13 @@ class PosProductTemplate(models.Model):
     def export_product_quantities(self, backend=None):
         self.search([("backend_id", "=", backend.id)]).recompute_pos_qty()
 
+    def export_product_template(self, backend, data):
+        """Export the inventory configuration and quantity of a product."""
+        print("export_product_template",  backend)
+        with backend.work_on(self._name) as work:
+                exporter = work.component(usage="product.template.exporter")
+                exporter.with_delay(priority=40).export_template(data=data, backend=backend)
+
 
 class TemplateAdapter(Component):
     _name = "pos.product.template.adapter"
@@ -193,6 +200,12 @@ class TemplateAdapter(Component):
     _pos_model = "product"
     _export_node_name = "product"
 
+    def update_new_template(self, data):
+        try:
+            response = self.client.add(self._pos_model, content=data, options={})
+            return response
+        except Exception as e:
+            print("Response:", e)    
 
 class ProductInventoryAdapter(Component):
     _name = "pos._import_stock_available.adapter"
