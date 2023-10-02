@@ -267,7 +267,7 @@ class ProductCombinationMapper(Component):
         cost_price = float(record["extend_price"] or "0.0")
         return {
             "list_price": product_template.list_price,
-            "standard_price": cost_price or product_template.wholesale_price,
+            "standard_price": product_template.wholesale_price,
             "impact_price": impact,
         }
 
