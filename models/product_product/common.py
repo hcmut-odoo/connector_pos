@@ -141,13 +141,6 @@ class PosProductCombination(models.Model):
     reference = fields.Char(string="Original reference")
     variant_barcode = fields.Char(string="Pos variant barcode")
 
-    def export_inventory(self, fields=None):
-        """Export the inventory configuration and quantity of a product."""
-        backend = self.backend_id
-        with backend.work_on("pos.product.variant") as work:
-            exporter = work.component(usage="inventory.exporter")
-            return exporter.run(self, fields)
-
     @api.model
     def export_product_quantities(self, backend):
         self.search(
@@ -182,6 +175,35 @@ class PosProductCombination(models.Model):
         with backend.work_on(self._name) as work:
             exporter = work.component(usage="product.quantity.exporter")
             exporter.run(barcode, new_qty)
+
+    def export_product_stock_qty(self, backend):
+        print("export_product_stock_qty", backend)
+        # NEED HELP
+        # Must have condition for list_variant
+        # still list all variants from ODOO
+        variant_records = self.search([])
+        print("variant_records", variant_records)
+        for variant_record in variant_records:
+            # product has found at many locations
+            # the necessary "lot_stock_id" is found by chain below
+            # pos.backend -> stock.warehouse -> stock.location
+            warehouse_record = self.env["stock.warehouse"].search([("id", "=", backend.warehouse_id.id)])
+            stock_location_id = warehouse_record.lot_stock_id.id
+            print(warehouse_record, stock_location_id)
+            stock_record = self.env["stock.quant"].search([
+                ("product_id", "=", variant_record.odoo_id.id),
+                ("location_id","=", stock_location_id)]
+            )
+
+            print(stock_record)
+
+            new_qty = stock_record["quantity"]
+
+            backend.env["pos.product.variant"].with_delay().export_quantity(
+                backend=backend,
+                barcode=variant_record.variant_barcode,
+                new_qty=new_qty
+            )
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
@@ -253,11 +275,16 @@ class ProductCombinationAdapter(Component):
     _export_node_name = "product_variant"
 
     def update_new_quantity(self, barcode, new_qty):
-        return self.client.edit(
+        result = self.client.edit(
             "product_variant", 
             content={"stock_qty": new_qty},
             options={"variant_barcode": barcode}
         )
+
+        # if result["message"] == "Validation errors":
+        #     pass
+        # else:
+        return result
 
 class ProductCombinationOptionAdapter(Component):
     _name = "pos.product.variant.option.adapter"
