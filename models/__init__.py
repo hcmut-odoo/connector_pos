@@ -15,3 +15,4 @@ from . import queue_job
 from . import res_partner
 from . import sale_order
 from . import sale_order_state
+from . import stock_immediate_transfer

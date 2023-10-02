@@ -308,15 +308,9 @@ class TemplateMapper(Component):
         return {"company_id": self.backend_record.company_id.id}
 
     @mapping
-    def barcode(self, record):
-        if self.has_variants(record):
-            return {}
-        barcode = str(record.get("id"))
-        if barcode in ["", "0"]:
-            return {}
-        if self.env["barcode.nomenclature"].check_ean(barcode):
-            return {"barcode": barcode}
-        return {}
+    def pos_barcode(self, record):
+        barcode = str(record.get("barcode"))
+        return {"pos_barcode": barcode}
 
     def _get_tax_ids(self, record):
         binder = self.binder_for("pos.account.tax.group")
@@ -428,29 +422,25 @@ class ProductInventoryImporter(Component):
 
     def _import_dependencies(self):
         """Import the dependencies for the record"""
-        record = self.pos_record
-        backend = self.backend_record
-        product_tmp = self.find_product_template(backend.id, record["product_id"])
+        pos_product_variant_record = self.pos_record
+        variant_barcode = pos_product_variant_record["variant_barcode"]
+        pos_product_template_id = pos_product_variant_record["product_id"] 
+        product_tmpl = self.find_product_template(variant_barcode=variant_barcode)
 
-        if not product_tmp:
-            self._import_dependency(record["product_id"], "pos.product.template")
-
-        if record["id"]:
+        if not product_tmpl:
+            self._import_dependency(pos_product_template_id, "pos.product.template")
             self._import_dependency(
-                record, "pos.product.variant"
+                pos_product_variant_record, "pos.product.variant"
             )
 
-    def find_product_template(self, backend_id, product_tmp_id):
-        pr_obj = self.env["pos.product.template"]
-        pos_product_tmp = pr_obj.search([
-            ("pos_id", "=", product_tmp_id),
-            ("backend_id", "=", backend_id)
-        ])
+    def find_product_template(self, variant_barcode):
+        product = self.env["product.product"].search([("barcode", "=", variant_barcode)])
+        product_tmpl = product.product_tmpl_id
 
-        if pos_product_tmp.id:
-            return True
+        if product_tmpl:
+            return product_tmpl
         
-        return False
+        return None
 
     def run(self, pos_id, record=None, **kwargs):
         assert record
@@ -467,6 +457,7 @@ class ProductInventoryImporter(Component):
         else:
             products = binding.odoo_id
 
+        # print("stock quantity _import", products, binding, binding.odoo_id)
         for product in products:
             vals = {
                 "product_id": product.id,
@@ -677,6 +668,21 @@ class ProductTemplateImporter(Component):
         category_id = record.get("category_id")    
 
         self._import_dependency(category_id, "pos.product.category")
+
+    def _has_to_skip(self, binding):
+        # print("_has_to_skip pos.product.template")
+        pos_product_template_record = self.pos_record
+        ppt_obj = self.env["pos.product.template"]
+
+        # Search for a product template by barcode
+        barcode = pos_product_template_record["barcode"]
+        product_template_mapped = ppt_obj.search([("pos_barcode", "=", barcode)])
+
+        if product_template_mapped:
+            # self.import_variants()
+            return True
+
+        return False
 
 
 class ProductTemplateBatchImporter(Component):
