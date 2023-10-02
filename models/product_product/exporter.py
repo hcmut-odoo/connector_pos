@@ -11,9 +11,4 @@ class ProductQuantityExporter(Component):
     _usage = "product.quantity.exporter"
 
     def run(self, barcode, new_qty, **kwargs):
-        datas = {
-            'barcode': barcode,
-            'new_qty': new_qty
-        }
-
-        self.backend_adapter.update_new_quantity(datas)
+        self.backend_adapter.update_new_quantity(barcode=barcode, new_qty=new_qty)

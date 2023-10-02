@@ -177,10 +177,11 @@ class PosProductCombination(models.Model):
             connector_no_export=True,
         ).change_product_qty()
     
-    def export_quantity(self, backend, bardcode, new_qty):
+    def export_quantity(self, backend, barcode, new_qty):
+        print("export_quantity",  barcode, new_qty)
         with backend.work_on(self._name) as work:
             exporter = work.component(usage="product.quantity.exporter")
-            exporter.run(bardcode, new_qty)
+            exporter.run(barcode, new_qty)
 
 class ProductAttribute(models.Model):
     _inherit = "product.attribute"
