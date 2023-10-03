@@ -102,7 +102,6 @@ class ResPartnerImporter(Component):
         pass
 
     def _has_to_skip(self, binding):
-        # print("_has_to_skip pos.res.partner.importer")
         pos_user_record = self.pos_record
         rp_obj = self.env["res.partner"]
 

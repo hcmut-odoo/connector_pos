@@ -457,7 +457,6 @@ class ProductInventoryImporter(Component):
         else:
             products = binding.odoo_id
 
-        # print("stock quantity _import", products, binding, binding.odoo_id)
         for product in products:
             vals = {
                 "product_id": product.id,
@@ -670,7 +669,6 @@ class ProductTemplateImporter(Component):
         self._import_dependency(category_id, "pos.product.category")
 
     def _has_to_skip(self, binding):
-        # print("_has_to_skip pos.product.template")
         pos_product_template_record = self.pos_record
         ppt_obj = self.env["pos.product.template"]
 
@@ -679,7 +677,6 @@ class ProductTemplateImporter(Component):
         product_template_mapped = ppt_obj.search([("pos_barcode", "=", barcode)])
 
         if product_template_mapped:
-            # self.import_variants()
             return True
 
         return False

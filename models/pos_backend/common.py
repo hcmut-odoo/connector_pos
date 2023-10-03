@@ -448,12 +448,10 @@ class PosBackend(models.Model):
 
     def backend_export_quantity(self, barcode, new_qty):
         for backend_record in self:
-            print(backend_record)
             backend_record.env["pos.product.variant"].export_quantity(backend=backend_record, barcode=barcode, new_qty=new_qty)
 
     def export_all_stock_qty(self):        
         for backend_record in self:
-            print("export_all_stock_qty", backend_record)
             backend_record.env["pos.product.variant"].export_product_stock_qty(
                 backend=backend_record
             )

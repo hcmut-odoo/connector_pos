@@ -47,7 +47,6 @@ class PosBaseImporter(AbstractComponent):
         :type always: bool
         :param kwargs: Additional keyword arguments passed to the importer.
         """
-        # print("import dependency", binding_model, pos_id)
         if not pos_id:
             return
         if isinstance(pos_id, dict):
@@ -108,7 +107,6 @@ class PosImporter(AbstractComponent):
 
 
     def _has_to_skip(self, binding=False):
-        # print("_has_to_skip here >>")
         """
         Check if the import can be skipped.
 
@@ -368,7 +366,6 @@ class PosImporter(AbstractComponent):
 
         # Binding is current pos model object
         skip = self._has_to_skip(binding=binding)
-        # print("didn't it skip ?", skip, binding)
         if skip:
             return skip
 

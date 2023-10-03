@@ -187,7 +187,6 @@ class PosProductTemplate(models.Model):
 
     def export_product_template(self, backend, data):
         """Export the inventory configuration and quantity of a product."""
-        print("export_product_template",  backend)
         with backend.work_on(self._name) as work:
                 exporter = work.component(usage="product.template.exporter")
                 exporter.with_delay(priority=40).export_template(data=data, backend=backend)

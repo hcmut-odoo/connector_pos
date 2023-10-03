@@ -79,7 +79,6 @@ class PosProductCategory(models.Model):
         return True
 
     def export_product_category(self, backend, data):
-        print("export_product_category",  backend)
         with backend.work_on(self._name) as work:
                 exporter = work.component(usage="product.category.exporter")
                 exporter.export_category(data=data, backend=backend)

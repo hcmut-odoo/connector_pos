@@ -131,20 +131,13 @@ class SaleOrderImportMapper(Component):
     ]
 
     def _map_child(self, map_record, from_attr, to_attr, model_name):
-        # print("_map_child map_record", map_record)
-        # print("_map_child from_attr", from_attr)
-        # print("_map_child to_attr", to_attr)
-        # print("_map_child model_name", model_name)
         source = map_record.source
-        # print("_map_child source", source)
         # TODO patch ImportMapper in connector to support callable
         if callable(from_attr):
             child_records = from_attr(self, source)
         else:
             child_records = source[from_attr]
 
-
-        # print("_map_child child_records", child_records)
         children = []
         for child_record in child_records:
             mapper = self._get_map_child_component(model_name)
@@ -153,10 +146,8 @@ class SaleOrderImportMapper(Component):
             )
             children.extend(items)
 
-        # print("_map_child children",children)
         if not self.validate_children(children=children):
             children = self.rebuild_children(children=children, order_rows=child_records)
-            # print("build_child_done", children)
         return children
 
     def validate_children(self, children):
@@ -166,14 +157,12 @@ class SaleOrderImportMapper(Component):
         return True
     
     def rebuild_children(self, children, order_rows):
-        # print("rebuild_children", children, order_rows)
         product_ids = []
         for order_row in order_rows:
             product = order_row.get("product", {})
             variant = product.get("variant", {})
             variant_barcode = variant.get("variant_barcode", None)
             product = self.find_product(barcode=variant_barcode)
-            # print("rebuild_children product", variant_barcode, product)
             product_ids.append(product.id)
 
         for i, (_, _, sale_order_line) in enumerate(children):
@@ -378,7 +367,6 @@ class SaleOrderImporter(Component):
         binding.odoo_id.recompute()
 
     def _create(self, data):
-        # print("pos.sale.order.importer _create", data)
         binding = super()._create(data)
         if binding.fiscal_position_id:
             binding.odoo_id._compute_tax_id()

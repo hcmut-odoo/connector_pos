@@ -150,14 +150,13 @@ class PosProductCombination(models.Model):
             ]
         ).recompute_pos_qty()
 
+    # Currently not supported import image
     # def set_product_image_variant(self, backend, variant_ids, **kwargs):
     #     with backend.work_on(self._name) as work:
     #         importer = work.component(usage="record.importer")
     #         return importer.set_variant_images(variant_ids, **kwargs)
 
     def _update_variant_qty(self, binding, extend_qty):
-        # print("_update_variant_qty binding", binding)
-
         vals = {
             "product_id": binding.id,
             "product_tmpl_id": binding.product_tmpl_id.id,
@@ -172,31 +171,25 @@ class PosProductCombination(models.Model):
         ).change_product_qty()
     
     def export_quantity(self, backend, barcode, new_qty):
-        print("export_quantity",  barcode, new_qty)
         with backend.work_on(self._name) as work:
             exporter = work.component(usage="product.quantity.exporter")
             exporter.run(barcode, new_qty)
 
     def export_product_stock_qty(self, backend):
-        print("export_product_stock_qty", backend)
         # NEED HELP
         # Must have condition for list_variant
         # still list all variants from ODOO
         variant_records = self.search([])
-        print("variant_records", variant_records)
         for variant_record in variant_records:
             # product has found at many locations
             # the necessary "lot_stock_id" is found by chain below
             # pos.backend -> stock.warehouse -> stock.location
             warehouse_record = self.env["stock.warehouse"].search([("id", "=", backend.warehouse_id.id)])
             stock_location_id = warehouse_record.lot_stock_id.id
-            print(warehouse_record, stock_location_id)
             stock_record = self.env["stock.quant"].search([
                 ("product_id", "=", variant_record.odoo_id.id),
                 ("location_id","=", stock_location_id)]
             )
-
-            print(stock_record)
 
             new_qty = stock_record["quantity"]
 
@@ -208,7 +201,6 @@ class PosProductCombination(models.Model):
     
     def export_product_variant(self, backend, data):
         """Export the inventory configuration and quantity of a product."""
-        print("export_product_variant",  backend)
         with backend.work_on(self._name) as work:
                 exporter = work.component(usage="product.quantity.exporter")
                 exporter.with_delay(priority=40).export_variant(data=data)

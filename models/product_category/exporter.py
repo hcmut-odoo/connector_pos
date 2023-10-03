@@ -15,9 +15,5 @@ class ProductCategoryExporter(Component):
     def export_category(self, data, *kwargs):
         try:
             response = self.backend_adapter.update_new_category(data=data)
-            # status = response.get("success")
-            # response = response.get("data")
-            # if status:
-            #     catgory_id = response.get("id")
         except Exception as e:
             print("Response:", e)
