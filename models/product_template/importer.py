@@ -43,7 +43,7 @@ class TemplateMapper(Component):
     _apply_on = "pos.product.template"
 
     direct = [
-        ("wholesale_price", "wholesale_price"),
+        ("price", "wholesale_price"),
         ("reference", "reference"),
         ("available_for_order", "available_for_order"),
         ("on_sale", "on_sale"),
@@ -60,7 +60,7 @@ class TemplateMapper(Component):
         if self.has_variants(record):
             return {}
         else:
-            return {"standard_price": record.get("wholesale_price", 0.0)}
+            return {"standard_price": record.get("price", 0.0)}
 
     @mapping
     def weight(self, record):

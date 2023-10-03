@@ -463,7 +463,7 @@ class SaleOrderLineMapper(Component):
         product = record.get("product")
         variant = product.get("variant")  
   
-        return {"price_unit": variant["extend_price"]}
+        return {"price_unit": float(product["price"]) + float(variant["extend_price"])}
 
     @mapping
     def product_id(self, record):
