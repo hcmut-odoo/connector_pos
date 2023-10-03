@@ -93,22 +93,7 @@ class SaleImportRule(Component):
         we check if current order is in the list.
         If not, the job fails gracefully.
         """
-        # if self.backend_record.importable_order_state_ids:
-        #     pos_state_id = record["id"]
-        #     state = self.binder_for("pos.sale.order.state").to_internal(
-        #         pos_state_id, unwrap=1
-        #     )
-        #     if not state:
-        #         raise FailedJobError(
-        #             _(
-        #                 "The configuration is missing "
-        #                 "for sale order state with POS ID=%s.\n\n"
-        #                 "Resolution:\n"
-        #                 " - Use the automatic import in 'Connectors > Pos "
-        #                 "Backends', button 'Synchronize base data'."
-        #             )
-        #             % (pos_state_id,)
-        #         )
+
         state = record["status"]
         if state == "cancel":
         # if state not in self.backend_record.importable_order_state_ids:
@@ -123,14 +108,12 @@ class SaleImportRule(Component):
 
 class SaleOrderImportMapper(Component):
     _name = "pos.sale.order.mapper"
-    # _inherit = ["pos.adapter", "pos.import.mapper"]
     _inherit = ["pos.import.mapper","pos.adapter"]
     _apply_on = "pos.sale.order"
 
     direct = [
         ("id", "pos_invoice_number"),
         ("delivery_phone", "pos_delivery_number"),
-        # ("total_paid", "total_amount"),
     ]
 
     def _get_sale_order_lines(self, record):
@@ -148,7 +131,6 @@ class SaleOrderImportMapper(Component):
     ]
 
     def _map_child(self, map_record, from_attr, to_attr, model_name):
-
         source = map_record.source
         # TODO patch ImportMapper in connector to support callable
         if callable(from_attr):
@@ -164,7 +146,36 @@ class SaleOrderImportMapper(Component):
             )
             children.extend(items)
 
+        if not self.validate_children(children=children):
+            children = self.rebuild_children(children=children, order_rows=child_records)
         return children
+
+    def validate_children(self, children):
+        for _, _, sale_order_line in children:
+            if "product_id" not in sale_order_line:
+                return False
+        return True
+    
+    def rebuild_children(self, children, order_rows):
+        product_ids = []
+        for order_row in order_rows:
+            product = order_row.get("product", {})
+            variant = product.get("variant", {})
+            variant_barcode = variant.get("variant_barcode", None)
+            product = self.find_product(barcode=variant_barcode)
+            product_ids.append(product.id)
+
+        for i, (_, _, sale_order_line) in enumerate(children):
+            sale_order_line["product_id"] = product_ids[i]
+        
+        return children
+
+
+    def find_product(self, barcode):
+        pv_obj = self.env["product.product"]
+        product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
+
+        return product_variant_mapped
 
     def _sale_order_exists(self, name):
         sale_order = self.env["sale.order"].search(
@@ -199,9 +210,11 @@ class SaleOrderImportMapper(Component):
 
     @mapping
     def partner_id(self, record):
-        binder = self.binder_for("pos.res.partner")
-        partner = binder.to_internal(record["user_id"], unwrap=True)
-        return {"partner_id": partner.id}
+        email = record["email"]
+        phone = record["phone_number"]
+
+        odoo_partner_mapped = self.found_partner(phone, email)
+        return {"partner_id": odoo_partner_mapped.id}
 
     @mapping
     def backend_id(self, record):
@@ -215,6 +228,15 @@ class SaleOrderImportMapper(Component):
             date_cred = parse_date_string(record["created_at"])
 
         return {"date_order": format_date_string(date_cred)}
+
+    def found_partner(self, phone, email):
+        rp_obj = self.env["res.partner"]
+
+        # Search for a partner by email or phone
+        partner_mapped = rp_obj.search([("email", "=", email), ("phone", "=", phone)])
+        if partner_mapped:
+            return partner_mapped
+        return None
 
     def finalize(self, map_record, values):
         sale_vals = {
@@ -266,7 +288,6 @@ class SaleOrderImportMapper(Component):
 class SaleOrderImporter(Component):
     _name = "pos.sale.order.importer"
     _inherit = ["pos.importer", "pos.adapter", "base.pos.connector"]
-    # _inherit = ["pos.importer"]
     _apply_on = "pos.sale.order"
 
     def __init__(self, environment):
@@ -360,11 +381,10 @@ class SaleOrderImporter(Component):
     def _create_invoice(self, binding):
         pso_obj = self.env["pos.sale.order"]
         pos_record = self.pos_record
-        # so_obj = self.env["sale.order"]
         
         # Check status of pos order
         if pos_record["status"] == "done":
-            pos_sale_order = pso_obj.search([("pos_id", "=", pos_record["id"])])
+            pos_sale_order = pso_obj.search([("id", "=", binding.id)])
             sale_order = pos_sale_order.odoo_id
             sale_order.action_confirm()
                         
@@ -431,20 +451,23 @@ class SaleOrderLineMapper(Component):
         product = record.get("product")
         variant = product.get("variant")  
   
-        return {"price_unit": variant["extend_price"]}
+        return {"price_unit": float(product["price"]) + float(variant["extend_price"])}
 
     @mapping
     def product_id(self, record):
-        binder = self.binder_for("pos.product.template")
-        template = binder.to_internal(record["product"]["id"], unwrap=True)
+        pos_product_record = record["product"]
+        pos_variant_record = pos_product_record["variant"]
+        variant_barcode = pos_variant_record["variant_barcode"]
         product = self.env["product.product"].search(
             [
-                ("product_tmpl_id", "=", template.id)
+                ("barcode", "=", variant_barcode)
             ],
             limit=1,
         )
+
         if not product:
             return {}
+
         return {"product_id": product.id}
 
     def _find_tax(self, pos_tax_id):

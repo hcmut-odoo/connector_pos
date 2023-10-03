@@ -78,6 +78,11 @@ class PosProductCategory(models.Model):
         backend.import_categories_from_date = now_fmt
         return True
 
+    def export_product_category(self, backend, data):
+        with backend.work_on(self._name) as work:
+                exporter = work.component(usage="product.category.exporter")
+                exporter.export_category(data=data, backend=backend)
+
 class ProductCategoryAdapter(Component):
     """
     This class represents the adapter for synchronizing POS product categories.
@@ -101,3 +106,10 @@ class ProductCategoryAdapter(Component):
     _pos_model = "category"
     _export_node_name = "category"
     _export_node_name_res = "category"
+
+    def update_new_category(self, data):
+        try:
+            response = self.client.add(self._pos_model, content=data, options={})
+            return response
+        except Exception as e:
+            print("Response:", e)

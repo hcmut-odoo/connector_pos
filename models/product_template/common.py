@@ -125,6 +125,7 @@ class PosProductTemplate(models.Model):
         default=True,
     )
     show_price = fields.Boolean(string="Display Price", default=True)
+    pos_barcode = fields.Char(string="Pos barcode")
     variants_ids = fields.One2many(
         comodel_name="pos.product.variant",
         inverse_name="main_template_id",
@@ -184,6 +185,12 @@ class PosProductTemplate(models.Model):
     def export_product_quantities(self, backend=None):
         self.search([("backend_id", "=", backend.id)]).recompute_pos_qty()
 
+    def export_product_template(self, backend, data):
+        """Export the inventory configuration and quantity of a product."""
+        with backend.work_on(self._name) as work:
+                exporter = work.component(usage="product.template.exporter")
+                exporter.with_delay(priority=40).export_template(data=data, backend=backend)
+
 
 class TemplateAdapter(Component):
     _name = "pos.product.template.adapter"
@@ -192,6 +199,12 @@ class TemplateAdapter(Component):
     _pos_model = "product"
     _export_node_name = "product"
 
+    def update_new_template(self, data):
+        try:
+            response = self.client.add(self._pos_model, content=data, options={})
+            return response
+        except Exception as e:
+            print("Response:", e)    
 
 class ProductInventoryAdapter(Component):
     _name = "pos._import_stock_available.adapter"
@@ -203,26 +216,10 @@ class ProductInventoryAdapter(Component):
     def get(self, options=None):
         return self.client.get(self._pos_model, options=options)
 
-    def export_quantity(self, filters, quantity):
-        self.export_quantity_url(
-            filters,
-            quantity,
-        )
-
-    @retryable_error
-    def export_quantity_url(self, filters, quantity, client=None):
-        if client is None:
-            client = self.client
-        response = client.search(self._pos_model, filters)
-        for stock_id in response:
-            res = client.get(self._pos_model, stock_id)
-            first_key = list(res)[0]
-            stock = res[first_key]
-            stock["quantity"] = int(quantity["quantity"])
-            if "out_of_stock" in quantity:
-                stock["out_of_stock"] = int(quantity["out_of_stock"])
-            client.edit(self._pos_model, {self._export_node_name: stock})
-
+    def export_quantity(self, backend, barcode, new_qty):
+        with backend.work_on("pos.product.variant") as work:
+            exporter = work.component(usage="product.quantity.exporter")
+            exporter.run(barcode, new_qty)
 
 class PosProductQuantityListener(Component):
     _name = "pos.product.quantity.listener"

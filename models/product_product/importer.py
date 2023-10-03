@@ -56,34 +56,21 @@ class ProductCombinationImporter(Component):
         super()._after_import(binding)
         # self.import_supplierinfo(binding)
 
-    # def set_variant_images(self, variants):
-    #     backend_adapter = self.component(
-    #         usage="backend.adapter", model_name="pos.product.variant"
-    #     )
-    #     for variant in variants:
-    #         record = backend_adapter.read(variant["id"])
-    #         associations = record.get("associations", {})
-    #         try:
-    #             pos_images = associations.get("images", {}).get(
-    #                 self.backend_record.get_version_pos_key("image"), {}
-    #             )
-    #         except PosWebServiceError:
-    #             # TODO: don't we track anything here? Maybe a checkpoint?
-    #             continue
-    #         binder = self.binder_for("pos.product.image")
-    #         if not isinstance(pos_images, list):
-    #             pos_images = [pos_images]
-    #         if "id" in pos_images[0]:
-    #             images = [
-    #                 binder.to_internal(x.get("id"), unwrap=True) for x in pos_images
-    #             ]
-    #         else:
-    #             continue
-    #         product_binder = self.binder_for("pos.product.variant")
-    #         product = product_binder.to_internal(variant["id"], unwrap=True)
-    #         product.with_context(connector_no_export=True).write(
-    #             {"image_ids": [(6, 0, [x.id for x in images])]}
-    #         )
+    def _has_to_skip(self, binding):
+        pv_obj = self.env["product.product"]
+
+        # Get product variant record from POS
+        pos_product_variant_record = self.pos_record
+
+        # Search for a product template by barcode
+        barcode = pos_product_variant_record["variant_barcode"]
+        product_variant_mapped = pv_obj.search([("barcode", "=", barcode)])
+
+        # If variant is exist -> only update quantity
+        if product_variant_mapped:
+            return True
+
+        return False
 
     def _import(self, binding, **kwargs):
         # We need to pass the template pos record because we need it
@@ -230,18 +217,15 @@ class ProductCombinationMapper(Component):
         return {"default_code": current_code}
 
     @mapping
+    def variant_barcode(self, record):
+        variant_barcode = record.get("variant_barcode")
+        return {"variant_barcode": variant_barcode}
+
+    @mapping
     def barcode(self, record):
-        barcode = record.get("barcode") or str(record.get("id"))
-        check_ean = self.env["barcode.nomenclature"].check_ean
-        if barcode in ["", "0"]:
-            backend_adapter = self.component(
-                usage="backend.adapter", model_name="pos.product.template"
-            )
-            template = backend_adapter.read(record["product_id"])
-            barcode = template.get("barcode") or template.get("id")
-        if barcode and barcode != "0" and check_ean(barcode):
-            return {"barcode": barcode}
-        return {}
+        variant_barcode = record.get("variant_barcode")
+        return {"barcode": variant_barcode}
+
 
     def _get_tax_ids(self, record): # Make default id_tax_rules_group
         product_tmpl_adapter = self.component(
@@ -278,7 +262,7 @@ class ProductCombinationMapper(Component):
         cost_price = float(record["extend_price"] or "0.0")
         return {
             "list_price": product_template.list_price,
-            "standard_price": cost_price or product_template.wholesale_price,
+            "standard_price": product_template.wholesale_price,
             "impact_price": impact,
         }
 
@@ -334,14 +318,13 @@ class ProductCombinationOptionImporter(Component):
 
     def _import_values(self, attribute_binding):
         option_value = self.pos_record
-        # option_values = [{"id": record["id"]}]
-        # if not isinstance(option_values, list):
-        #     option_values = [option_values]
 
-        # for option_value in option_values:
         self._import_dependency(
             option_value, "pos.product.variant.option.value"
         )
+    
+    def _has_to_skip(self, binding):
+        return False
 
     def _after_import(self, binding):
         super()._after_import(binding)

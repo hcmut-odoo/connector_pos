@@ -364,6 +364,7 @@ class PosImporter(AbstractComponent):
         if not binding:
             self._check_in_new_connector_env()
 
+        # Binding is current pos model object
         skip = self._has_to_skip(binding=binding)
         if skip:
             return skip
@@ -383,6 +384,7 @@ class PosImporter(AbstractComponent):
         :param kwargs: Additional keyword arguments passed to the method.
         """
 
+        # Craete/Update data in pos models
         map_record = self._map_data()
         if binding:
             record = self._update_data(map_record)
