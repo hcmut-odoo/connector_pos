@@ -386,6 +386,7 @@ class SaleOrderImporter(Component):
         if pos_record["status"] == "done":
             pos_sale_order = pso_obj.search([("id", "=", binding.id)])
             sale_order = pos_sale_order.odoo_id
+            sale_order.with_delay().write({'order_state': 'confirmed'})
             sale_order.action_confirm()
                         
             # Create invoice
