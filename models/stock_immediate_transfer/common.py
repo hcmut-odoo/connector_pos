@@ -9,6 +9,10 @@ class StockImmediateTransfer(models.TransientModel):
         stock_picking_ids = self.pick_ids
         for stock_picking in stock_picking_ids:
             sale_order = stock_picking.sale_id
+            if sale_order.invoice_status == "invoiced":
+                sale_order.with_delay().write({'order_state': 'delivering'})
+            else:
+                sale_order.with_delay().write({'order_state': 'exported'})
 
             order_lines = sale_order.order_line
             for line in order_lines:

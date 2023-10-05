@@ -40,11 +40,10 @@
         "views/pos_backend_view.xml",
         "views/product_view.xml",
         "views/product_category_view.xml",
-        # "views/image_view.xml",
         "views/connector_pos_menu.xml",
-        # "views/account_view.xml",
         "views/queue_job_views.xml",
         'views/assets.xml',
+        'views/sale_order_view.xml',
     ],
     'assets': {
         'web.assets_backend': [
