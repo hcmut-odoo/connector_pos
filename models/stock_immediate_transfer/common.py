@@ -9,6 +9,8 @@ class StockImmediateTransfer(models.TransientModel):
         stock_picking_ids = self.pick_ids
         for stock_picking in stock_picking_ids:
             sale_order = stock_picking.sale_id
+            if sale_order.order_state != "shipped":
+                sale_order.with_delay().write({'order_state': 'shipped'})
 
             order_lines = sale_order.order_line
             for line in order_lines:
