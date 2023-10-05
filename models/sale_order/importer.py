@@ -190,7 +190,11 @@ class SaleOrderImportMapper(Component):
 
     @mapping
     def total_paid(self, record):
-        return {"total_amount":record["total"]}
+        return {"total_amount":record["total"]} # giá bao gồm thuế
+    
+    @mapping
+    def total_tax_amount(self, record):
+        return {"total_amount_tax": record["total_tax"]} # chỉ thuế
 
     @mapping
     def state(self, record):
@@ -485,8 +489,8 @@ class SaleOrderLineMapper(Component):
         result = self.env["account.tax"].browse()
         for pos_tax in taxes:
             result |= self._find_tax(pos_tax)
-
-        return {"tax_id": [(6, 0, result.ids)]}
+        # id 4 is Value Added Tax (VAT) 10%
+        return {"tax_id": [(6, 0, [4])]}
 
     @mapping
     def backend_id(self, record):
