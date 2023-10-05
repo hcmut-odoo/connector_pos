@@ -22,13 +22,13 @@ class SaleOrder(models.Model):
     )
 
     order_state = fields.Selection(
-        [('processing', 'Processing'),
+        [('pending', 'Pending'),
          ('confirmed', 'Confirmed'),
          ('canceled', 'Canceled'),
          ('delivering', 'Delivering'),
-         ('released', 'Released')],
+         ('shipped', 'Shipped')],
         string='Order State',
-        default='processing',
+        default='pending',
     )
 
 class PosSaleOrder(models.Model):
