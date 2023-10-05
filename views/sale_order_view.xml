@@ -1,14 +1,13 @@
 <odoo>
     <data>
-        <!-- Modify the existing form view (e.g., sale.view_order_form) -->
         <record model="ir.ui.view" id="view_sale_order_form_inherited">
             <field name="name">sale.order.form.inherited</field>
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
-                <!-- Add the order_state field where you want it to appear -->
-                <field name="order_state" position="after">
-                </field>
+                <xpath expr="//field[@name='invoice_status']" position="after">
+                    <field name="order_state"/>
+                </xpath>
             </field>
         </record>
     </data>
