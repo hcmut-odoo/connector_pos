@@ -25,7 +25,9 @@ class AccountMove(models.Model):
                 continue
             sale_order = sale_order[0]
             
-            if sale_order.order_state != "confirmed":
+            if sale_order.order_state == "exported":
+                sale_order.with_delay().write({'order_state': 'delivering'})
+            else:
                 sale_order.with_delay().write({'order_state': 'confirmed'})
 
             pos_order_record = so_obj.search([("name", "=", move.invoice_origin)])
