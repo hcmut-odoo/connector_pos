@@ -6,7 +6,7 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_id']" position="after">
-                    <field name="order_state" decoration-success="order_state == 'Confirmed'" decoration-warning="order_state == 'Pending'" decoration-danger="order_state == 'Canceled'" decoration-info="order_state == 'Delivering'" decoration-success="order_state == 'Exported'" widget="badge" optional="show"/>
+                    <field name="order_state" decoration-primary="order_state == 'Confirmed'" decoration-warning="order_state == 'Pending'" decoration-danger="order_state == 'Canceled'" decoration-info="order_state == 'Delivering'" decoration-success="order_state == 'Exported'" widget="badge" optional="show"/>
                 </xpath>
             </field>
         </record>
@@ -17,7 +17,7 @@
             <field name="inherit_id" ref="sale.view_order_tree"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='state']" position="after">
-                    <field name="order_state" decoration-success="order_state == 'Confirmed'" decoration-warning="order_state == 'Pending'" decoration-danger="order_state == 'Canceled'" decoration-info="order_state == 'Delivering'" decoration-success="order_state == 'Exported'" widget="badge" optional="show"/>
+                    <field name="order_state" decoration-primary="order_state == 'Confirmed'" decoration-warning="order_state == 'Pending'" decoration-danger="order_state == 'Canceled'" decoration-info="order_state == 'Delivering'" decoration-success="order_state == 'Exported'" widget="badge" optional="show"/>
                 </xpath>
             </field>
         </record>
