@@ -5,7 +5,18 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='invoice_status']" position="after">
+                <xpath expr="//field[@name='user_id']" position="after">
+                    <field name="order_state"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_sale_order_tree_inherited">
+            <field name="name">sale.order.tree.inherited</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='state']" position="after">
                     <field name="order_state"/>
                 </xpath>
             </field>
