@@ -21,6 +21,15 @@ class SaleOrder(models.Model):
         string="Pos Bindings",
     )
 
+    order_state = fields.Selection(
+        [('processing', 'Processing'),
+         ('confirmed', 'Confirmed'),
+         ('canceled', 'Canceled'),
+         ('delivering', 'Delivering'),
+         ('released', 'Released')],
+        string='Order State',
+        default='processing',
+    )
 
 class PosSaleOrder(models.Model):
     _name = "pos.sale.order"
