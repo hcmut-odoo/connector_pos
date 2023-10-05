@@ -26,7 +26,7 @@ class SaleOrder(models.Model):
          ('confirmed', 'Confirmed'),
          ('canceled', 'Canceled'),
          ('delivering', 'Delivering'),
-         ('shipped', 'Shipped')],
+         ('exported', 'Exported')],
         string='Order State',
         default='pending',
     )
